@@ -1,10 +1,11 @@
+# Hedron compiled files
+compile_commands.json
+
+# node
+aifo/slidescope/ui/node_modules
+
 # Compiled files
 *.so
-
-# third party
-third_party/*
-!third_party/*.BUILD
-!third_party/BUILD.bazel
 
 # image files
 *.tiff
@@ -12,6 +13,10 @@ third_party/*
 *.dcm
 *.jpg
 *.png
+*.mrxs
+
+# test files
+aifo/openslide_go/openslide/testdata/*
 
 # model files
 *.jit
@@ -19,10 +24,9 @@ third_party/*
 *.pt
 
 # bazel
-bazel-bin
-bazel-aiforoncology
-bazel-out
-bazel-testlogs
+bazel-*
+.bazelrc.local
+MODULE.bazel.lock
 
 # notebooks
 *.ipynb
@@ -56,12 +60,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
