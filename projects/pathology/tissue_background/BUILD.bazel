@@ -1,0 +1,23 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary")
+
+py_binary(
+    name = "create_manifest",
+    srcs = ["create_manifest.py"],
+    deps = ["//aifo/ahcore"],
+)
+
+py_binary(
+    name = "train",
+    srcs = ["train.py"],
+    data = [
+        ".env",
+        "additional_config",
+    ],
+    env = {
+        "HYDRA_FULL_ERROR": "1",
+        "OMP_NUM_THREADS": "1",
+    },
+    deps = [
+        "//aifo/ahcore",
+    ],
+)

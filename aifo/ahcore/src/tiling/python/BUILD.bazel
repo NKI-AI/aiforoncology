@@ -1,0 +1,6 @@
+exports_files(
+    [
+        "grid_module.cpp",
+    ],
+    visibility = ["//visibility:public"],
+)

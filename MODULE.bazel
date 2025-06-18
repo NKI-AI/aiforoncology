@@ -1,0 +1,658 @@
+"""
+This module defines the dependencies and configurations for the AI for Oncology monorepo.
+"""
+
+module(name = "aiforoncology")
+
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "bazel_features", version = "1.28.0")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.7.1")
+bazel_dep(name = "gazelle", version = "0.43.0")
+bazel_dep(name = "cython", version = "3.0.11-1")
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+
+bazel_dep(name = "rules_uv", version = "0.68.0", dev_dependency = True)
+
+bazel_dep(name = "apple_support", version = "1.21.1")
+bazel_dep(name = "rules_multirun", version = "0.11.0")
+bazel_dep(name = "rules_python", version = "1.2.0")
+bazel_dep(name = "aspect_rules_lint", version = "1.4.2")
+bazel_dep(name = "aspect_rules_py", version = "1.3.2")
+
+# We are using this commit because it's not yet released
+# https://github.com/aspect-build/rules_py/commit/6ad466797d8e595016c5a8bec7186268b9ea7f6f
+# This allows sharding of tests and easier setup
+archive_override(
+    module_name = "aspect_rules_py",
+    integrity = "sha256-0EJJ2KgKvlISrxVk5Tmc74iMMJNZJZ/3dG55azcc8sA=",
+    strip_prefix = "rules_py-1445ccaf3665cb5d8f78da4f5fc4d73fd36fa165",
+    urls = ["https://github.com/aspect-build/rules_py/archive/1445ccaf3665cb5d8f78da4f5fc4d73fd36fa165.zip"],
+)
+
+bazel_dep(name = "rules_license", version = "1.0.0")
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "pybind11_bazel", version = "2.13.6")
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1")
+bazel_dep(name = "boost.geometry", version = "1.83.0.bcr.1")
+bazel_dep(name = "boost.interprocess", version = "1.83.0.bcr.1")
+bazel_dep(name = "boost.atomic", version = "1.83.0.bcr.1")
+bazel_dep(name = "c-blosc2", version = "2.12.0.bcr.2")
+bazel_dep(name = "toolchains_llvm", version = "1.4.0")
+bazel_dep(name = "buildifier_prebuilt", version = "8.0.3")
+
+bazel_dep(name = "rules_doxygen", version = "2.2.1", dev_dependency = True)
+
+bazel_dep(name = "abseil-cpp", version = "20250127.1")
+bazel_dep(name = "rules_buf", version = "0.3.0")
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    commit = "4f28899228fb3ad0126897876f147ca15026151e",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
+    # Renovate should also provide updates.
+)
+
+bazel_dep(name = "rules_multitool", version = "1.2.0")
+
+multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
+multitool.hub(lockfile = "//tools/lint:multitool.lock.json")
+use_repo(multitool, "multitool")
+
+bazel_dep(name = "rules_cuda", version = "0.2.1")
+
+# pick a specific version (this is optional an can be skipped)
+# This one is needed as it's the only version that supports the local toolkit
+# TODO RUST !!! LLVM ?!
+archive_override(
+    module_name = "rules_cuda",
+    integrity = "sha256-zEip8HFEa9090HPotVNbdLFj+jqa+C4Eitt/S4q9uig=",
+    strip_prefix = "rules_cuda-9106b4e6d76709d5974d49dcdacc83c3071425b9",
+    urls = ["https://github.com/bazel-contrib/rules_cuda/archive/9106b4e6d76709d5974d49dcdacc83c3071425b9.tar.gz"],
+)
+
+# Technically you can include libxml2 this way, but this is a foreign build, so it's better to use the build file
+# bazel_dep(name = "libxml2", version = "2.13.5")
+bazel_dep(name = "cereal", version = "1.3.2")
+bazel_dep(name = "spdlog", version = "1.15.2")
+bazel_dep(name = "fmt", version = "11.1.4")  # Version for spdlog
+bazel_dep(name = "googletest", version = "1.16.0.bcr.1")
+bazel_dep(name = "google_benchmark", version = "1.9.2")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.5")
+bazel_dep(name = "zstd", version = "1.5.7")
+bazel_dep(name = "glib", version = "2.82.2.bcr.5")
+bazel_dep(name = "libwebp", version = "1.5.0")
+bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
+bazel_dep(name = "libjpeg_turbo", version = "2.1.91")
+bazel_dep(name = "freetype", version = "2.13.3")
+bazel_dep(name = "sqlite3", version = "3.49.1")
+bazel_dep(name = "xz", version = "5.4.5.bcr.5")
+bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
+
+# Hermetic CUDA configuration
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.component(
+    name = "local_cuda_cccl",
+    component_name = "cccl",
+    sha256 = "d264448e35b319d56442dc2d10300bc4e3e57eae261f41d56787649f40800ede",
+    strip_prefix = "cuda_cccl-linux-x86_64-12.4.99-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_cccl/linux-x86_64/cuda_cccl-linux-x86_64-12.4.99-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_cudart",
+    component_name = "cudart",
+    sha256 = "dc126fb171d996c495756d44d565f7dd927245cbdc7191b9f8d5075d09ada699",
+    strip_prefix = "cuda_cudart-linux-x86_64-12.4.99-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.99-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_nvcc",
+    component_name = "nvcc",
+    sha256 = "9ec3199cb6e8ec2a3b3336bf120690e534aee8ab5ddc3ca51e0a01aad9494f48",
+    strip_prefix = "cuda_nvcc-linux-x86_64-12.4.99-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.99-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_cublas",
+    component_name = "cublas",
+    sha256 = "c267c4d2cd42065ae2c30ca41a43ddce4e0ecc5484de23f299e3c397b5506eda",
+    strip_prefix = "libcublas-linux-x86_64-12.4.5.8-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libcublas/linux-x86_64/libcublas-linux-x86_64-12.4.5.8-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_cufft",
+    component_name = "cufft",
+    sha256 = "63a046d51a45388e10612c3fd423bb7fa5127496aa9bb3951a609e8b9d996852",
+    strip_prefix = "libcufft-linux-x86_64-11.3.3.41-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libcufft/linux-x86_64/libcufft-linux-x86_64-11.3.3.41-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_cusolver",
+    component_name = "cusolver",
+    sha256 = "7cf794bf21c4947d0922e378984fa7939f0811bfc355121be1a0d44cd8695c09",
+    strip_prefix = "libcusolver-linux-x86_64-11.7.2.55-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libcusolver/linux-x86_64/libcusolver-linux-x86_64-11.7.2.55-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_cusparse",
+    component_name = "cusparse",
+    sha256 = "53e3e5598c92d00d0c46a270b9070edd23705684958b6494e6a5f841ab4d2613",
+    strip_prefix = "libcusparse-linux-x86_64-12.4.1.24-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libcusparse/linux-x86_64/libcusparse-linux-x86_64-12.4.1.24-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_npp",
+    component_name = "npp",
+    sha256 = "020037ee6c5e6ea41352b6a82a22bbdc75616339e9453b70ed3e84df51f6a25e",
+    strip_prefix = "libnpp-linux-x86_64-12.3.3.65-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libnpp/linux-x86_64/libnpp-linux-x86_64-12.3.3.65-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_nvrtc",
+    component_name = "nvrtc",
+    sha256 = "19746bd29e151e1e6d1ce7371a30b5218fe150d2a911466c9ae0c382b37886ea",
+    strip_prefix = "cuda_nvrtc-linux-x86_64-12.4.99-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvrtc/linux-x86_64/cuda_nvrtc-linux-x86_64-12.4.99-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_nvjitlink",
+    component_name = "nvjitlink",
+    sha256 = "064777547cee873d0cee38ba918c66d8ee397e313fc832ae4745e37061cd37f9",
+    strip_prefix = "libnvjitlink-linux-x86_64-12.4.99-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libnvjitlink/linux-x86_64/libnvjitlink-linux-x86_64-12.4.99-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_nvjpeg",
+    component_name = "nvjpeg",
+    sha256 = "00f83dfb3fc88452674a9e816ec11d8a52d0a4de68596d7e130980b461e509cb",
+    strip_prefix = "libnvjpeg-linux-x86_64-12.3.5.57-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libnvjpeg/linux-x86_64/libnvjpeg-linux-x86_64-12.3.5.57-archive.tar.xz"],
+)
+cuda.toolkit(
+    name = "local_cuda",
+    components_mapping = {
+        "cccl": "@local_cuda_cccl",
+        "cudart": "@local_cuda_cudart",
+        "nvcc": "@local_cuda_nvcc",
+        "cublas": "@local_cuda_cublas",
+        "cufft": "@local_cuda_cufft",
+        "cusolver": "@local_cuda_cusolver",
+        "cusparse": "@local_cuda_cusparse",
+        "npp": "@local_cuda_npp",
+        "nvrtc": "@local_cuda_nvrtc",
+        "nvjitlink": "@local_cuda_nvjitlink",
+        "nvjpeg": "@local_cuda_nvjpeg",
+    },
+    version = "12.4.99",
+)
+
+# TODO: Cudnn
+use_repo(
+    cuda,
+    "local_cuda",
+    "local_cuda_cccl",
+    "local_cuda_cublas",
+    "local_cuda_cudart",
+    "local_cuda_cufft",
+    "local_cuda_cusolver",
+    "local_cuda_cusparse",
+    "local_cuda_npp",
+    "local_cuda_nvcc",
+    "local_cuda_nvjitlink",
+    "local_cuda_nvjpeg",
+    "local_cuda_nvrtc",
+)
+
+doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
+doxygen_extension.configuration(
+    platform = "mac",
+    version = "0.0.0",
+)
+use_repo(doxygen_extension, "doxygen")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.11",
+)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    enable_implicit_namespace_pkgs = True,
+    environment = {
+        # Hack for building extensions from source.
+        # See also:  https://github.com/bazelbuild/rules_python/issues/1463
+        # Solution from: https://github.com/theoremlp/rules_uv/issues/163#issuecomment-2704365236
+        "CC": "clang",
+        "CXX": "clang++",
+    },
+    hub_name = "pip",
+    python_version = "3.11",
+    requirements_darwin = "//aifo/python_requirements:requirements_darwin.txt",
+    requirements_lock = "//aifo/python_requirements:requirements_linux.txt",
+)
+use_repo(pip, "pip")
+
+# LLM serve pip
+pip.parse(
+    hub_name = "llm_serve_pip",
+    python_version = "3.11",
+    requirements_darwin = "//aifo/llm_serve:requirements_darwin.txt",
+    requirements_lock = "//aifo/llm_serve:requirements_linux.txt",
+)
+use_repo(pip, "llm_serve_pip")
+
+# Utilities pip
+pip.parse(
+    enable_implicit_namespace_pkgs = True,
+    hub_name = "utilities_pip",
+    python_version = "3.11",
+    requirements_darwin = "//tools/utilities:requirements_darwin.txt",
+    requirements_lock = "//tools/utilities:requirements_linux.txt",
+)
+use_repo(pip, "utilities_pip")
+pip.parse(
+    enable_implicit_namespace_pkgs = True,
+    hub_name = "fef_pip",
+    python_version = "3.11",
+    requirements_darwin = "//aifo/fef:requirements_darwin.txt",
+    requirements_lock = "//aifo/fef:requirements_linux.txt",
+)
+use_repo(pip, "fef_pip")
+
+# Direct pip
+pip.parse(
+    enable_implicit_namespace_pkgs = True,
+    hub_name = "direct_pip",
+    python_version = "3.11",
+    requirements_darwin = "//aifo/direct:requirements_darwin.txt",
+    requirements_lock = "//aifo/direct:requirements_linux.txt",
+)
+use_repo(pip, "direct_pip")
+
+# Golang deps
+bazel_dep(name = "rules_go", version = "0.54.0")
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.24.0")
+
+# Go deps.
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+use_repo(
+    go_deps,
+    "com_github_gofiber_fiber_v2",
+    "com_github_golang_jwt_jwt_v5",
+    "com_github_mattn_go_sqlite3",
+    "com_github_spf13_cobra",
+    "com_github_stretchr_testify",
+    "com_github_swaggo_swag",
+    "in_gopkg_yaml_v3",
+    "org_golang_x_crypto",
+    "org_golang_x_image",
+    "org_golang_x_term",
+)
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+llvm.toolchain(
+    llvm_versions = {
+        "linux-x86_64": "14.0.0",
+        "darwin-aarch64": "16.0.0",
+    },
+)
+use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
+
+buf = use_extension("@rules_buf//buf:extensions.bzl", "buf")
+
+# see https://github.com/bufbuild/buf/releases
+buf.toolchains(version = "v1.50.0")
+use_repo(buf, "rules_buf_toolchains")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_archive(
+    name = "xtl",
+    build_file = "@//third_party:xtl.BUILD",
+    sha256 = "ee38153b7dd0ec84cee3361f5488a4e7e6ddd26392612ac8821cbc76e740273a",
+    strip_prefix = "xtl-0.8.0",
+    urls = ["https://github.com/xtensor-stack/xtl/archive/refs/tags/0.8.0.tar.gz"],
+)
+
+http_archive(
+    name = "xsimd",
+    build_file = "@//third_party:xsimd.BUILD",
+    sha256 = "edd8cd3d548c185adc70321c53c36df41abe64c1fe2c67bc6d93c3ecda82447a",
+    strip_prefix = "xsimd-13.2.0",
+    urls = ["https://github.com/xtensor-stack/xsimd/archive/refs/tags/13.2.0.tar.gz"],
+)
+
+http_archive(
+    name = "xtensor",
+    build_file = "@//third_party:xtensor.BUILD",
+    sha256 = "f5f42267d850f781d71097b50567a480a82cd6875a5ec3e6238555e0ef987dc6",
+    strip_prefix = "xtensor-0.26.0",
+    urls = ["https://github.com/xtensor-stack/xtensor/archive/refs/tags/0.26.0.tar.gz"],
+)
+
+http_archive(
+    name = "pixman",
+    build_file = "@//third_party:pixman.BUILD",
+    sha256 = "6d200dec3740d9ec4ec8d1180e25779c00bc749f94278c8b9021f5534db223fc",
+    strip_prefix = "pixman-0.40.0",
+    urls = ["https://cairographics.org/releases/pixman-0.40.0.tar.gz"],
+)
+
+http_archive(
+    name = "minizip",
+    build_file = "@//third_party:minizip.BUILD",
+    sha256 = "c3e9ceab2bec26cb72eba1cf46d0e2c7cad5d2fe3adf5df77e17d6bbfea4ec8f",
+    strip_prefix = "minizip-ng-4.0.8",
+    urls = ["https://github.com/zlib-ng/minizip-ng/archive/refs/tags/4.0.8.tar.gz"],
+)
+
+http_archive(
+    name = "proxy-libintl",
+    build_file = "@//third_party:proxy-libintl.BUILD",
+    sha256 = "13ef3eea0a3bc0df55293be368dfbcff5a8dd5f4759280f28e030d1494a5dffb",
+    strip_prefix = "proxy-libintl-0.4",
+    urls = ["https://github.com/frida/proxy-libintl/archive/refs/tags/0.4.tar.gz"],
+)
+
+http_archive(
+    name = "pcre",
+    build_file = "@//third_party:pcre.BUILD",
+    sha256 = "4e6ce03e0336e8b4a3d6c2b70b1c5e18590a5673a98186da90d4f33c23defc09",
+    strip_prefix = "pcre-8.45",
+    urls = ["https://downloads.sourceforge.net/project/pcre/pcre/8.45/pcre-8.45.tar.gz"],
+)
+
+http_archive(
+    name = "libffi",
+    build_file = "@//third_party:libffi.BUILD",
+    sha256 = "138607dee268bdecf374adf9144c00e839e38541f75f24a1fcf18b78fda48b2d",
+    strip_prefix = "libffi-3.4.7",
+    urls = ["https://github.com/libffi/libffi/releases/download/v3.4.7/libffi-3.4.7.tar.gz"],
+)
+
+http_archive(
+    name = "glib2",
+    build_file = "@//third_party:glib2.BUILD",
+    sha256 = "0ec3d1313216141ec399717ad4dc657b8ac514a0a1a468805db116d80eccb4b9",
+    strip_prefix = "glib-2.72.0",
+    urls = ["https://github.com/GNOME/glib/archive/refs/tags/2.72.0.tar.gz"],
+)
+
+http_archive(
+    name = "bzip2",
+    build_file = "@//third_party:bzip2.BUILD",
+    sha256 = "05f62e1b8c0c512ae6491f142e99172eca9150a8977fffc6ec5e3fc571eba719",
+    strip_prefix = "bzip2-bzip2-1.0.6",
+    urls = ["https://gitlab.com/bzip2/bzip2/-/archive/bzip2-1.0.6/bzip2-bzip2-1.0.6.tar.bz2"],
+)
+
+http_archive(
+    name = "gdk-pixbuf",
+    build_file = "@//third_party:gdk-pixbuf.BUILD",
+    sha256 = "226d950375907857b23c5946ae6d30128f08cd75f65f14b14334c7a9fb686e36",
+    strip_prefix = "gdk-pixbuf-2.42.9",
+    urls = ["https://gitlab.gnome.org/GNOME/gdk-pixbuf/-/archive/2.42.9/gdk-pixbuf-2.42.9.tar.gz"],
+)
+
+http_archive(
+    name = "libtiff",
+    build_file = "@//third_party:libtiff.BUILD",
+    sha256 = "273a0a73b1f0bed640afee4a5df0337357ced5b53d3d5d1c405b936501f71017",
+    strip_prefix = "tiff-4.7.0",
+    urls = ["https://download.osgeo.org/libtiff/tiff-4.7.0.tar.xz"],
+)
+
+# TODO: Update version
+http_archive(
+    name = "openjp2",
+    build_file = "@//third_party:openjp2.BUILD",
+    sha256 = "8702ba68b442657f11aaeb2b338443ca8d5fb95b0d845757968a7be31ef7f16d",
+    strip_prefix = "openjpeg-2.4.0",
+    urls = ["https://github.com/uclouvain/openjpeg/archive/v2.4.0.tar.gz"],
+)
+
+http_archive(
+    name = "fontconfig",
+    build_file = "@//third_party:fontconfig.BUILD",
+    sha256 = "6a33dc555cc9ba8b10caf7695878ef134eeb36d0af366041f639b1da9b6ed220",
+    strip_prefix = "fontconfig-2.16.0",
+    urls = ["https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.16.0.tar.xz"],
+)
+
+# TODO: Update to 1.18.2
+# https://cairographics.org/releases/cairo-1.18.2.tar.xz
+# a62b9bb42425e844cc3d6ddde043ff39dbabedd1542eba57a2eb79f85889d45a
+http_archive(
+    name = "cairo",
+    build_file = "@//third_party:cairo.BUILD",
+    sha256 = "5e7b29b3f113ef870d1e3ecf8adf21f923396401604bda16d44be45e66052331",
+    strip_prefix = "cairo-1.16.0",
+    urls = ["https://www.cairographics.org/releases/cairo-1.16.0.tar.xz"],
+)
+
+http_archive(
+    name = "openslide",
+    build_file = "@//third_party:openslide.BUILD",
+    sha256 = "cc227c44316abb65fb28f1c967706eb7254f91dbfab31e9ae6a48db6cf4ae562",
+    strip_prefix = "openslide-4.0.0",
+    urls = ["https://github.com/openslide/openslide/releases/download/v4.0.0/openslide-4.0.0.tar.xz"],
+)
+
+http_archive(
+    name = "libnsgif",
+    build_file = "@//third_party:libnsgif.BUILD",
+    sha256 = "6014c842f61454d2f5a0f8243d7a8d7bde9b7da3ccfdca2d346c7c0b2c4c061b",
+    strip_prefix = "libnsgif-1.0.0",
+    urls = ["https://download.netsurf-browser.org/libs/releases/libnsgif-1.0.0-src.tar.gz"],
+)
+
+http_archive(
+    name = "liblzw",
+    build_file = "@//third_party:liblzw.BUILD",
+    sha256 = "a5d5acaeac40f299e521af400134b70f63a140f2cb28d3502eca67c790afd58a",
+    strip_prefix = "liblzw-0.3",
+    urls = ["https://github.com/vapier/liblzw/releases/download/v0.3/liblzw-0.3.tar.xz"],
+)
+
+http_archive(
+    name = "libspng",
+    build_file = "@//third_party:libspng.BUILD",
+    sha256 = "47ec02be6c0a6323044600a9221b049f63e1953faf816903e7383d4dc4234487",
+    strip_prefix = "libspng-0.7.4",
+    urls = ["https://github.com/randy408/libspng/archive/v0.7.4.tar.gz"],
+)
+
+http_archive(
+    name = "lodepng",
+    build_file = "@//third_party:lodepng.BUILD",
+    sha256 = "6c9e533890606a7afee3ed382769804873fcba30792b9295ed0c01fff8aa0e25",
+    strip_prefix = "lodepng-master",
+    urls = ["https://github.com/lvandeve/lodepng/archive/refs/heads/master.zip"],
+)
+
+# Has it's own build file
+http_archive(
+    name = "knusperli",
+    sha256 = "716550112612f2e44acfa1a5ab05beec0661f8010652fb3fa43e9ba08af1000b",
+    strip_prefix = "knusperli-master",
+    urls = ["https://github.com/google/knusperli/archive/refs/heads/master.zip"],
+)
+
+http_archive(
+    name = "uthash",
+    build_file = "@//third_party:uthash.BUILD",
+    sha256 = "e10382ab75518bad8319eb922ad04f907cb20cccb451a3aa980c9d005e661acc",
+    strip_prefix = "uthash-2.3.0",
+    urls = ["https://github.com/troydhanson/uthash/archive/refs/tags/v2.3.0.tar.gz"],
+)
+
+http_archive(
+    name = "libdicom",
+    build_file = "@//third_party:libdicom.BUILD",
+    sha256 = "058bfaa7653c60a70798e021001d765e3f91ca4df5a8824b7604eaa57376449b",
+    strip_prefix = "libdicom-1.1.0",
+    urls = ["https://github.com/ImagingDataCommons/libdicom/releases/download/v1.1.0/libdicom-1.1.0.tar.xz"],
+)
+
+# http_archive(
+#     name = "librsvg",
+#     build_file = "@//third_party:librsvg.BUILD",
+#     sha256 = "ddd8e51426b41ef886898dc4198ca48d7e296668be19595173631fc86c79d689",
+#     strip_prefix = "librsvg-2.59.2",
+#     urls = ["https://github.com/GNOME/librsvg/archive/refs/tags/2.59.2.tar.gz"]
+# )
+
+http_archive(
+    name = "libexif",
+    build_file = "@//third_party:libexif.BUILD",
+    sha256 = "16fdfa59cf9d301a9ccd5c1bc2fe05c78ee0ee2bf96e39640039e3dc0fd593cb",
+    strip_prefix = "libexif-0.6.25",
+    urls = ["https://github.com/libexif/libexif/releases/download/v0.6.25/libexif-0.6.25.tar.gz"],
+)
+
+http_archive(
+    name = "lcms2",
+    build_file = "@//third_party:lcms2.BUILD",
+    sha256 = "d873d34ad8b9b4cea010631f1a6228d2087475e4dc5e763eb81acc23d9d45a51",
+    strip_prefix = "lcms2-2.16",
+    urls = ["https://github.com/mm2/Little-CMS/releases/download/lcms2.16/lcms2-2.16.tar.gz"],
+)
+
+# provides its own build file, but it's broken
+http_archive(
+    name = "hwy",
+    build_file = "@//third_party:hwy.BUILD",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:hwy_mac_fix.patch"],  # This is only needed on Darwin with Clang 16
+    sha256 = "58e9d5d41d6573ad15245ad76aec53a69499ca7480c092d899c4424812ed906f",
+    strip_prefix = "highway-1.2.0",
+    urls = ["https://github.com/google/highway/releases/download/1.2.0/highway-1.2.0.tar.gz"],
+)
+
+http_archive(
+    name = "libvips",
+    build_file = "@//third_party:libvips.BUILD",
+    sha256 = "d28d7bf7e3f8fa17390c255ace4a05a1c56459e1f6015319f4847ea0733593b3",
+    strip_prefix = "libvips-8.16.0",
+    urls = ["https://github.com/libvips/libvips/archive/refs/tags/v8.16.0.tar.gz"],
+)
+
+http_archive(
+    name = "libtorch_macos",
+    build_file = "@//third_party:libtorch.BUILD",
+    sha256 = "0822824c1df267159a649ad4701518217c60b8f75de056a26ab43958d8ab1622",
+    strip_prefix = "libtorch",
+    urls = ["https://download.pytorch.org/libtorch/cpu/libtorch-macos-arm64-2.5.1.zip"],
+)
+
+http_archive(
+    name = "libtorch_linux",
+    build_file = "@//third_party:libtorch.BUILD",
+    sha256 = "be21b2ad0d7848fed3f909711889a549864b6cf06d564c58454eeb32a76eaaae",
+    strip_prefix = "libtorch",
+    urls = ["https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.6.0%2Bcu124.zip"],
+)
+
+http_archive(
+    name = "openslide_python",
+    build_file = "//third_party/openslide_python:BUILD.bazel",
+    patches = ["//third_party/openslide_python:lowlevel.patch"],
+    sha256 = "95da570994abd8a02db18b8dac68da0b3d3f7eba733bdeeb2a8b52e40e1de1c8",
+    strip_prefix = "openslide_python-1.4.1",
+    urls = ["https://github.com/openslide/openslide-python/releases/download/v1.4.1/openslide_python-1.4.1.tar.gz"],
+)
+
+http_archive(
+    name = "pyvips",
+    build_file = "//third_party/pyvips:BUILD.bazel",
+    patches = [
+        "//third_party/pyvips:pyvips_build.patch",
+        "//third_party/pyvips:__init__.patch",
+    ],
+    sha256 = "d70f21a557523404884dd2a192505227e1e6a50ed74315d73c416489b43e9414",
+    strip_prefix = "pyvips-2.2.3",
+    urls = ["https://github.com/libvips/pyvips/archive/refs/tags/v2.2.3.tar.gz"],
+)
+
+http_archive(
+    name = "libxml2",
+    build_file = "@//third_party:libxml2.BUILD",
+    sha256 = "0621930c340b4b3f3df4a03b4616cdeba48c96e2bdfc94883aa1a460beae9101",
+    strip_prefix = "libxml2-2.9.13",
+    urls = ["https://github.com/GNOME/libxml2/archive/refs/tags/v2.9.13.tar.gz"],
+)
+
+http_archive(
+    name = "pybind11",
+    build_file = "@//third_party:pybind11.BUILD",
+    sha256 = "e08cb87f4773da97fa7b5f035de8763abc656d87d5773e62f6da0587d1f0ec20",
+    strip_prefix = "pybind11-2.13.6",
+    urls = ["https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz"],
+)
+
+# Rules for containerization
+bazel_dep(name = "rules_oci", version = "2.2.6")
+bazel_dep(name = "container_structure_test", version = "1.19.1")
+bazel_dep(name = "aspect_bazel_lib", version = "2.15.3")
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci.pull(
+    name = "distroless_base",
+    digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+    image = "gcr.io/distroless/base",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+)
+use_repo(oci, "distroless_base", "distroless_base_linux_amd64", "distroless_base_linux_arm64")
+
+# Rules for typescript, javascript, and swc
+bazel_dep(name = "aspect_rules_js", version = "2.3.7")
+bazel_dep(name = "aspect_rules_ts", version = "3.6.0")
+bazel_dep(name = "aspect_rules_esbuild", version = "0.22.1")
+bazel_dep(name = "aspect_rules_swc", version = "2.4.2")
+
+rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext")
+rules_ts_ext.deps()
+use_repo(rules_ts_ext, "npm_typescript")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "npm",
+    data = [
+        "//:pnpm-workspace.yaml",
+        "//aifo/slidescope/ui:package.json",
+    ],
+    npmrc = "//:.npmrc",
+    pnpm_lock = "//:pnpm-lock.yaml",
+    verify_node_modules_ignored = "//:.bazelignore",
+)
+use_repo(npm, "npm")
+
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm")
+
+# Allows developers to use the matching pnpm version, for example:
+# bazelisk run @pnpm -- --dir /home/runner/work/rules_js/rules_js install
+use_repo(pnpm, "pnpm")
+
+# Copybara
+http_jar = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_jar")
+
+http_jar(
+    name = "com_github_google_copybara",
+    # Fill in from https://github.com/google/copybara/releases/download/[version]/copybara_deploy.jar.sha256
+    sha256 = "9767bc35ff9c702f82f722311bad9c68c350c5ffd74ab9014b08a19928b57662",
+    urls = ["https://github.com/google/copybara/releases/download/v20250526/copybara_deploy.jar"],
+)

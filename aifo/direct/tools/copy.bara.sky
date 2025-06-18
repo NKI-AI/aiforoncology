@@ -1,0 +1,197 @@
+# copy.bara.sky
+
+# This configuration file sets up a Copybara workflow to sync NKI-AI/aiforoncology-internal/aifo/direct
+# to the NKI-AI/direct repository.
+
+# Update the following fields according to your needs:
+#   - In 'origin', change the URL and ref to match your source repository and branch.
+#   - In 'destination', ensure the URL and push branch point to the target repository.
+#   - The 'origin_files' glob restricts the sync to the specific part of the project 
+#     you want to mirror. Adjust it (e.g., "sync_folder/**") as necessary.
+
+REFERENCE_REPO_URL = "git@github.com:NKI-AI/aiforoncology-internal.git" # The source repository URL to sync from.
+REFERENCE_BRANCH = "feature/direct-copybara"  # The branch in the source repository to sync from.
+
+TARGET_REPO_URL = "git@github.com:NKI-AI/direct.git" # The destination repository URL to sync to.
+TARGET_BRANCH = "test/bazel"  # The branch in the destination repository to sync to.
+
+# Top-level config and metadata files that define the build system, environment, and documentation.
+CORE_CONFIG_FILES = [
+    "aifo/direct/.bazeliskrc",
+    "aifo/direct/.bazelrc",
+    "aifo/direct/.bazelrc.local",
+    "aifo/direct/.bazelrc.local.example",
+    "aifo/direct/.bazelversion",
+    "aifo/direct/.coveragerc",
+    "aifo/direct/.editorconfig",
+    "aifo/direct/.gitignore",
+    "aifo/direct/.npmrc",
+    "aifo/direct/.pre-commit-config.yaml",
+    "aifo/direct/.prospector.yml",
+    "aifo/direct/.ruff.toml",
+    "aifo/direct/codecov.yml",
+    "aifo/direct/package.json",
+    "aifo/direct/pnpm-lock.yaml",
+    "aifo/direct/prettier.config.cjs",
+    "aifo/direct/pyproject.toml",
+    "aifo/direct/requirements.in",
+    "aifo/direct/requirements_darwin.txt",
+    "aifo/direct/requirements_linux.txt",
+    "aifo/direct/setup.cfg",
+    "aifo/direct/setup.py",
+]
+
+# Licensing, authorship, and general project documentation.
+PROJECT_METADATA_FILES = [
+    "aifo/direct/CITATION.cff",
+    "aifo/direct/CODE_OF_CONDUCT.md",
+    "aifo/direct/LICENSE",
+    "aifo/direct/MANIFEST.in",
+    "aifo/direct/Makefile",
+    "aifo/direct/README.rst",
+    "aifo/direct/authors.rst",
+    "aifo/direct/contributing.rst",
+    "aifo/direct/installation.rst",
+]
+
+# Bazel-specific configuration and integration files.
+BAZEL_INTEGRATION_FILES = [
+    "aifo/direct/BUILD_external.bazel",
+    "aifo/direct/MODULE_external.bazel",
+    "aifo/direct/direct/BUILD_external.bazel",
+    "aifo/direct/tests/BUILD_external.bazel",
+    "aifo/direct/tools/BUILD_external.bazel",
+    "aifo/direct/tools/bazel/BUILD_external.bazel",
+    "aifo/direct/tools/format/BUILD_external.bazel",
+]
+
+# Tooling and build system utilities.
+TOOLING_FILES = [
+    "aifo/direct/tools/bazel/cython_rules.bzl",
+    "aifo/direct/tools/README.md",
+]
+
+# Group all explicitly listed files into a flat list.
+EXPLICIT_FILES = (
+    CORE_CONFIG_FILES + PROJECT_METADATA_FILES + BAZEL_INTEGRATION_FILES + TOOLING_FILES
+)
+
+# Glob patterns for Bazel integration files that are not explicitly listed.
+BAZEL_INTEGRATION_GLOBS = [
+    "aifo/direct/tests/**/BUILD_external.bazel",
+]
+
+# Source code and related resources to be globbed.
+SOURCE_FILE_GLOBS = [
+    "aifo/direct/.github/**",
+    "aifo/direct/direct/**/*.py",
+    "aifo/direct/direct/**/*.pyx",
+    "aifo/direct/direct/*.py",
+    "aifo/direct/docker/**",
+    "aifo/direct/docs/**",
+    "aifo/direct/logo/**",
+    "aifo/direct/tests/**/*.py",
+    "aifo/direct/tests/*.py",
+    "aifo/direct/tools/**/*.py",
+    "aifo/direct/tools/*.py",
+]
+
+# Projects to copy wholesale.
+PROJECT_DIRECTORY_GLOBS = [
+    "aifo/direct/projects/**",
+]
+
+# Combine all glob patterns into a single tuple for the workflow.
+GLOBS = (
+    BAZEL_INTEGRATION_GLOBS + SOURCE_FILE_GLOBS + PROJECT_DIRECTORY_GLOBS
+)
+
+core.workflow(
+    name = "default",
+    origin = git.origin(
+        url = REFERENCE_REPO_URL,
+        ref = REFERENCE_BRANCH,  # Change this to the branch you want to sync from.
+    ),
+    destination = git.destination(
+        url = TARGET_REPO_URL,
+        fetch = TARGET_BRANCH, # Change this to the branch you want to sync to.
+        push = TARGET_BRANCH,
+    ),
+    origin_files = EXPLICIT_FILES + glob(GLOBS),
+    destination_files = glob(["**"], exclude = []),
+    transformations = [
+        # First, rename Bazel integration files to their new names.
+        core.move(
+            before = "aifo/direct/MODULE_external.bazel", 
+            after = "MODULE.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/BUILD_external.bazel",
+            after = "BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/BUILD_external.bazel",
+            after = "tests/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/test_cli/BUILD_external.bazel",
+            after = "tests/test_cli/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/tests_common/BUILD_external.bazel",
+            after = "tests/tests_common/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/tests_data/BUILD_external.bazel",
+            after = "tests/tests_data/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/tests_functionals/BUILD_external.bazel",
+            after = "tests/tests_functionals/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/tests_nn/BUILD_external.bazel",
+            after = "tests/tests_nn/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/tests_ssl/BUILD_external.bazel",
+            after = "tests/tests_ssl/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tests/tests_utils/BUILD_external.bazel",
+            after = "tests/tests_utils/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tools/BUILD_external.bazel",
+            after = "tools/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tools/bazel/BUILD_external.bazel",
+            after = "tools/bazel/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/tools/format/BUILD_external.bazel",
+            after = "tools/format/BUILD.bazel"
+        ),
+        core.move(
+            before = "aifo/direct/direct/BUILD_external.bazel",
+            after = "direct/BUILD.bazel"
+        ),
+        # Move everything else to the root of the destination repository.
+        core.move(
+            before = "aifo/direct", 
+            after = ""
+        ),
+    ],
+    # Can change the authoring information to reflect the person or team responsible for this workflow.
+    authoring = authoring.pass_thru("George Yiasemis <georgeyiasemis@hotmail.com>"),
+
+)
+
+# To execute the workflow, run:
+#   bazel run //aifo/direct/tools:copybara -- migrate <absolute_path_to_copy.bara.sky>
+# If it's your first time running Copybara in specific target, you may need to initialize it first:
+#   bazel run //aifo/direct/tools:copybara -- migrate <absolute_path_to_copy.bara.sky> --init-history
+# You can also use the `--force` flag to overwrite existing files in the destination repository.
+
+# Ensure you have the necessary permissions and that the branches exist in both repositories.

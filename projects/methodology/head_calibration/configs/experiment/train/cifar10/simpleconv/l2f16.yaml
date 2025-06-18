@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - override /data: cifar
+  - override /model: simpleconv/l2_f16
+tags: ["cifar10", "simpleconv"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+data:
+  batch_size: 2048
+  cifar_version: 10
+experiment_name: "train-cifar10_simpleconv"
+run_label: "l2_f16"

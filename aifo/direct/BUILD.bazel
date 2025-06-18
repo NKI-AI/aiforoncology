@@ -1,0 +1,207 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@direct_pip//:requirements.bzl", "requirement")
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_multirun//:defs.bzl", "multirun")
+load("@rules_uv//uv:pip.bzl", "pip_compile")
+load("//tools:cython_rules.bzl", "pyx_library")
+
+pip_compile(
+    name = "generate_requirements_linux_txt",
+    # The many linux version of this pip compilation is above the default due to onnxruntime.
+    # Issue: https://github.com/astral-sh/uv/issues/3842, future uv updates might up the default.
+    python_platform = "x86_64-manylinux_2_28",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_linux.txt",
+)
+
+pip_compile(
+    name = "generate_requirements_darwin_txt",
+    # The many linux version of this pip compilation is above the default due to onnxruntime.
+    # Issue: https://github.com/astral-sh/uv/issues/3842, future uv updates might up the default.
+    python_platform = "aarch64-manylinux_2_28",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_darwin.txt",
+)
+
+multirun(
+    name = "generate_requirements_lock",
+    commands = [
+        ":generate_requirements_linux_txt",
+        ":generate_requirements_darwin_txt",
+    ],
+    # Running in a single threaded mode allows consecutive `uv` invocations to benefit
+    # from the `uv` cache from the first run.
+    jobs = 1,
+)
+
+cc_library(
+    name = "numpy_headers",
+    hdrs = [
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/__multiarray_api.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/__ufunc_api.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/_dtype_api.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/_neighborhood_iterator_imp.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/_numpyconfig.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/arrayobject.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/arrayscalars.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/experimental_dtype_api.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/halffloat.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/ndarrayobject.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/ndarraytypes.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/noprefix.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_1_7_deprecated_api.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_3kcompat.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_common.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_cpu.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_endian.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_interrupt.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_math.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_no_deprecated_api.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/npy_os.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/numpyconfig.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/old_defines.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/random/bitgen.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/random/distributions.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/random/libdivide.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/ufuncobject.h",
+        "@@rules_python~~pip~direct_pip_311_numpy//:site-packages/numpy/core/include/numpy/utils.h",
+    ],
+    strip_include_prefix = "/site-packages/numpy/core/include",
+    visibility = ["//visibility:private"],
+)
+
+pyx_library(
+    name = "_poisson",
+    srcs = ["direct/common/_poisson.pyx"],
+    cc_deps = [":numpy_headers"],
+    copts = ["-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION"],
+)
+
+pyx_library(
+    name = "_gaussian",
+    srcs = ["direct/common/_gaussian.pyx"],
+    cc_deps = [":numpy_headers"],
+    copts = ["-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION"],
+)
+
+pyx_library(
+    name = "_gaussian_fill",
+    srcs = ["direct/ssl/_gaussian_fill.pyx"],
+    cc_deps = [":numpy_headers"],
+    copts = ["-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION"],
+)
+
+py_library(
+    name = "algorithms",
+    srcs = glob(["direct/algorithms/**/*.py"]),
+    deps = [
+        requirement("torch"),
+        requirement("numpy"),
+    ],
+)
+
+py_library(
+    name = "common",
+    srcs = glob(["direct/common/**/*.py"]),
+    deps = [
+        ":_gaussian",
+        ":_poisson",
+        requirement("scipy"),
+    ],
+)
+
+py_library(
+    name = "config",
+    srcs = glob(["direct/config/**/*.py"]),
+    deps = [requirement("omegaconf")],
+)
+
+py_library(
+    name = "data",
+    srcs = glob(["direct/data/**/*.py"]),
+    deps = [
+        requirement("h5py"),
+        requirement("joblib"),
+        requirement("threadpoolctl"),
+        requirement("scikit-learn"),
+        requirement("ismrmrd"),
+    ],
+)
+
+py_library(
+    name = "functionals",
+    srcs = glob(["direct/functionals/**/*.py"]),
+    deps = [
+        requirement("lazy_loader"),
+        requirement("scikit-image"),
+        requirement("sewar"),
+    ],
+)
+
+py_library(
+    name = "nn",
+    srcs = glob(["direct/nn/**/*.py"]),
+    deps = [requirement("einops")],
+)
+
+py_library(
+    name = "ssl",
+    srcs = glob(["direct/ssl/**/*.py"]),
+    deps = [
+        ":_gaussian_fill",
+        requirement("numpy"),
+        requirement("torch"),
+    ],
+)
+
+py_library(
+    name = "utils",
+    srcs = glob(["direct/utils/**/*.py"]),
+    deps = [
+        requirement("tqdm"),
+        requirement("tensorboard"),
+    ],
+)
+
+py_library(
+    name = "direct_lib",
+    srcs = glob(["direct/**/*.py"]),
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":algorithms",
+        ":common",
+        ":config",
+        ":data",
+        ":functionals",
+        ":nn",
+        ":ssl",
+        ":utils",
+        requirement("numpy"),
+        requirement("torch"),
+        requirement("torchvision"),
+        requirement("omegaconf"),
+    ],
+)
+
+filegroup(
+    name = "all_srcs",
+    srcs = [
+        "//aifo/direct/projects:all_project_srcs",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "direct_bin",
+    srcs = glob([
+        "direct/cli/**/*.py",
+    ]),
+    data = [
+        ":all_srcs",
+    ],
+    main = "direct/cli/cli.py",
+    deps = [
+        ":direct_lib",
+    ],
+)

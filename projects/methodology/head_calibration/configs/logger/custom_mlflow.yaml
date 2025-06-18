@@ -1,0 +1,12 @@
+# https://mlflow.org
+mlflow:
+  _target_: head_calibration.loggers.custom_mlflow.CMLFlowLogger
+  experiment_name: ${experiment_name}
+  run_name: "${run_label}"
+  tracking_uri: ${paths.log_dir}/mlflow/mlruns # run `mlflow ui` command inside the `logs/mlflow/` dir to open the UI
+  tags: null
+  # save_dir: "./mlruns"
+  log_model: True
+  prefix: ""
+  artifact_location: null
+  # run_id: ""

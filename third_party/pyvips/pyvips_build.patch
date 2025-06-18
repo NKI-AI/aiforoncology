@@ -1,0 +1,111 @@
+--- pyvips/pyvips_build.py	2024-04-28 13:15:50
++++ pyvips/pyvips_build.py	2025-03-02 16:34:34
+@@ -1,70 +1,52 @@
+-# flake8: noqa
++import sys
++import os
+ 
+-import pkgconfig
++# Add the directory containing vdecls.py to the Python path
++current_dir = os.path.dirname(os.path.abspath(__file__))
++sys.path.append(current_dir)
++
++import vdecls
+ from cffi import FFI
+ 
+-# we must have the vips package to be able to do anything
+-if not pkgconfig.exists('vips'):
+-    raise Exception('unable to find pkg-config package "vips"')
+-if pkgconfig.installed('vips', '< 8.2'):
+-    raise Exception('pkg-config "vips" is too old -- need libvips 8.2 or later')
+ 
+-# pkgconfig 1.5+ has modversion ... otherwise, use a small shim
+-try:
+-    from pkgconfig import modversion
+-except ImportError:
+-    def modversion(package):
+-        # will need updating once we hit 8.20 :(
+-        for i in range(20, 3, -1):
+-            if pkgconfig.installed(package, '>= 8.' + str(i)):
+-                # be careful micro version is always set to 0
+-                return '8.' + str(i) + '.0'
+-        return '8.2.0'
++def main():
++    # Parse arguments for output path
++    if len(sys.argv) < 2:
++        print("Usage: python3 script.py <output_path>")
++        sys.exit(1)
+ 
+-major, minor, micro = [int(s) for s in modversion('vips').split('.')]
++    output_path = sys.argv[1]
+ 
+-ffibuilder = FFI()
++    # Version information
++    major = 8
++    minor = 16
++    micro = 0
+ 
+-# vips_value_set_blob_free and vips_area_free_cb compat for libvips < 8.6
+-compat = '''
+-int
+-vips_area_free_cb(void *mem, VipsArea *area)
+-{
+-    g_free(mem);
+-
+-    return 0;
+-}
+-
+-void
+-vips_value_set_blob_free(GValue* value, void* data, size_t length)
+-{
+-    vips_value_set_blob(value, (VipsCallbackFn) vips_area_free_cb,
+-        data, length);
+-}
+-''' if major == 8 and minor < 6 else ''
+-
+-ffibuilder.set_source("_libvips",
+-    r"""
++    # Initialize FFI
++    ffibuilder = FFI()
++    ffibuilder.set_source(
++        "_libvips",
++        r"""
+         #include <vips/vips.h>
+-    """ + compat,
+-    **pkgconfig.parse('vips'))
++        """,
++    )
+ 
+-features = {
+-    'major': major,
+-    'minor': minor,
+-    'micro': micro,
+-    'api': True,
+-}
++    # Features and configurations
++    features = {
++        "major": major,
++        "minor": minor,
++        "micro": micro,
++        "api": True,
++    }
+ 
++    # Add C declarations
++    ffibuilder.cdef(vdecls.cdefs(features))
+ 
+-import vdecls
++    # Emit the C file at the specified path
++    print(f"Generating C code at {output_path}...")
++    ffibuilder.emit_c_code(output_path)
++    print(f"Generated: {output_path}")
+ 
+-# handy for debugging
+-# with open('vips-source.txt','w') as f:
+-#     c = vdecls.cdefs(features)
+-#     f.write(c)
+ 
+-ffibuilder.cdef(vdecls.cdefs(features))
+-
+ if __name__ == "__main__":
+-    ffibuilder.compile(verbose=True)
++    main()

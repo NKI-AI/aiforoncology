@@ -1,0 +1,218 @@
+load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+
+cc_library(
+    name = "headers",
+    hdrs = glob(["include/**/*.h"]),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:utilities",
+        "//third_party/xtensor_python",
+        "@boost.geometry",
+        "@libvips//:libvips-cpp",
+        "@spdlog",
+        "@xtensor",
+    ],
+)
+
+cc_library(
+    name = "foreground",
+    hdrs = ["include/dlup/foreground.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":geometry_lib",
+        ":headers",
+        "//aifo/aifocore:concepts",
+    ],
+)
+
+cc_library(
+    name = "backends",
+    hdrs = glob(["include/dlup/backends/**/*.h"]),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":slide_dataset",  # This is required for the DatasetSample struct, probably this circular dependency needs to be refactored
+        "//aifo/aifocore:concepts",
+        "@libvips//:libvips-cpp",
+    ],
+)
+
+cc_library(
+    name = "slide_image",
+    hdrs = [
+        "include/dlup/backends/abstract.h",
+        "include/dlup/backends/vips.h",
+        "include/dlup/slide_geometry.h",
+        "include/dlup/slide_image.h",
+    ],  # TODO: The backends needs to be added here to prevent circular dependencies
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "@libvips//:libvips-cpp",
+    ],
+)
+
+cc_library(
+    name = "slide_dataset",
+    hdrs = ["include/dlup/slide_dataset.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":foreground",
+        ":slide_image",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:status",
+    ],
+)
+
+cc_library(
+    name = "utilities",
+    hdrs = ["include/dlup/utilities/filetype.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "geometry",
+    srcs = glob(["src/geometry/*.cpp"]),
+    hdrs = glob(["include/dlup/geometry/**/*.h"]) + ["include/dlup/transforms.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:utilities",
+        "//third_party/xtensor_python",
+        "@boost.geometry",
+        "@xtensor",
+    ],
+)
+
+cc_library(
+    name = "geometry_lib",
+    srcs = [
+        "src/geometry/box.cpp",
+        "src/geometry/collection.cpp",
+        "src/geometry/polygon.cpp",
+        "src/geometry/transforms.cpp",
+        "src/geometry/utilities.cpp",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":headers",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:utilities",
+    ],
+)
+
+pybind_extension(
+    name = "dlup/_geometry",
+    srcs = [
+        "src/geometry/geometry_module.cpp",
+    ],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__geometry"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":geometry_lib",
+        ":headers",
+        "//aifo/aifocore:concepts",
+    ],
+)
+
+pybind_extension(
+    name = "dlup/_foreground",
+    srcs = ["src/foreground_module.cpp"],
+    copts = ["-fvisibility=hidden"],
+    data = ["//aifo/aifocore:concepts"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__foreground"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":geometry_lib",
+        ":headers",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:tiling",
+        "//aifo/aifocore:tiling_python",
+        "//aifo/aifocore:utilities",
+    ],
+)
+
+pybind_extension(
+    name = "dlup/_libtiff_tiff_writer",
+    srcs = ["src/_libtiff_tiff_writer.cpp"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__libtiff_tiff_writer"],
+        "//conditions:default": [],
+    }),
+    deps = ["@libtiff"],
+)
+
+pybind_extension(
+    name = "dlup/_background",
+    srcs = ["src/_background.cpp"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__background"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":geometry_lib",
+        ":headers",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:tiling",
+        "//aifo/aifocore:tiling_python",
+    ],
+)
+
+pybind_extension(
+    name = "dlup/backends/_vips_backend",
+    srcs = [
+        "src/backends/vips_docstrings.h",
+        "src/backends/vips_module.cpp",
+    ],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__vips_backend"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":backends",
+        "//aifo/aifocore:utilities",
+    ],
+)
+
+py_library(
+    name = "dlup",
+    srcs = glob(["dlup/**/*.py"]),
+    data = [
+        ":dlup/_background",
+        ":dlup/_foreground",
+        ":dlup/_geometry",
+        ":dlup/_libtiff_tiff_writer",
+        ":dlup/backends/_vips_backend",
+        "//aifo/aifocore:concepts",
+    ],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("numpy"),
+        requirement("shapely"),
+        requirement("cffi"),
+        requirement("pillow"),  # Required for openslide_python
+        requirement("packaging"),
+        requirement("xsdata"),
+        requirement("tifffile"),
+        "@openslide_python",
+        "@pyvips",
+    ],
+)

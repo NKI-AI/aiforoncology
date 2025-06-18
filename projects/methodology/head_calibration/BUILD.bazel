@@ -1,0 +1,56 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+
+project_requirements = [
+    requirement("torch"),
+    requirement("torchvision"),
+    requirement("lightning"),
+    requirement("torchmetrics"),
+    requirement("hydra-core"),
+    requirement("hydra-colorlog"),
+    requirement("mlflow"),
+    requirement("numpy"),
+    requirement("scikit-image"),
+    requirement("matplotlib"),
+    requirement("rich"),
+    requirement("python-dotenv"),
+]
+
+relplot_requirements = [
+    requirement("pandas"),
+    requirement("numpy"),
+    requirement("scipy"),
+    requirement("matplotlib"),
+    requirement("seaborn"),
+    requirement("scikit-learn"),
+]
+
+py_library(
+    name = "head_calibration",
+    srcs = glob(["head_calibration/**/*.py"]),
+    imports = ["."],
+    deps = project_requirements,
+)
+
+py_library(
+    name = "relplot",
+    srcs = glob(["third_party/relplot/**/*.py"]),
+    imports = ["third_party/relplot/src"],
+    deps = relplot_requirements,
+)
+
+py_binary(
+    name = "train",
+    srcs = ["train.py"],
+    data = [
+        ".env",
+        "configs",
+    ],
+    env = {
+        "HYDRA_FULL_ERROR": "1",
+    },
+    deps = project_requirements + [
+        ":head_calibration",
+        ":relplot",
+    ],
+)

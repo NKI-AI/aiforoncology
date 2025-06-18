@@ -1,0 +1,21 @@
+# @package _global_
+defaults:
+  - override /data: cifar
+  - override /model: multiclass
+  - override /model/net: simpleconv/l2_f8
+  - override /callbacks: default
+  - override /trainer: default
+tags: ["cifar10", "fcn", "example"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+model:
+  _target_: head_calibration.models.multiclass_classifier_module.MulticlassClassifierLitModule
+  net:
+    num_channels: 3
+    img_dim: 32
+data:
+  batch_size: 2048
+experiment_name: "example-cifar10_fcn"
+run_label: "l3_w32_ce"

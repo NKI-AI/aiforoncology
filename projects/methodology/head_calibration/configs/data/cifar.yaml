@@ -1,0 +1,5 @@
+_target_: head_calibration.data.cifar_datamodule.CIFARDataModule
+batch_size: 1024
+num_workers: 0
+data_dir: ${paths.data_dir}
+cifar_version: 10

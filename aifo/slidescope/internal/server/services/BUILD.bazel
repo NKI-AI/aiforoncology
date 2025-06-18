@@ -1,0 +1,50 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "services",
+    srcs = [
+        "auth.go",
+        "masks.go",
+        "slide_cache.go",
+        "slides.go",
+        "users.go",
+    ],
+    importpath = "aifo.dev/aifo/slidescope/internal/server/services",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/openslide_go/openslide",
+        "//aifo/slidescope/internal/config",
+        "//aifo/slidescope/internal/datasources/database",
+        "//aifo/slidescope/internal/server/auth",
+        "//aifo/slidescope/internal/server/domain",
+        "//aifo/slidescope/internal/server/errors",
+        "//aifo/slidescope/internal/server/middleware",
+        "//aifo/slidescope/internal/slides",
+        "//aifo/slidescope/internal/tiff",
+        "//aifo/slidescope/internal/utils",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+    ],
+)
+
+go_test(
+    name = "services_test",
+    srcs = [
+        "auth_test.go",
+        "masks_test.go",
+        "slide_cache_test.go",
+        "slides_test.go",
+        "users_test.go",
+    ],
+    embed = [":services"],
+    deps = [
+        "//aifo/slidescope/internal/config",
+        "//aifo/slidescope/internal/datasources/database",
+        "//aifo/slidescope/internal/server/auth",
+        "//aifo/slidescope/internal/server/domain",
+        "//aifo/slidescope/internal/slides",
+        "//aifo/slidescope/internal/utils",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//mock",
+    ],
+)

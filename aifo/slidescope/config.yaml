@@ -1,0 +1,48 @@
+# SlideScope main configuration
+# Server configuration
+server:
+  port: "3000"
+  host: "0.0.0.0"
+  environment: "production"
+  # CORS configuration
+  cors:
+    enabled: true
+    allow_origins:
+      - "http://localhost:3000"
+      - "http://127.0.0.1:3000"
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    allow_headers:
+      - "Origin"
+      - "Content-Type"
+      - "Accept"
+      - "Authorization"
+    allow_credentials: true
+    max_age: 86400 # 24 hours
+# Database configuration
+database:
+  url: "sqlite://slidescope.db"
+# Authentication configuration
+auth:
+  jwt_secret: "dev-secret-key-replace-in-production"
+  jwt_algorithm: "HS256"
+  jwt_expiration_minutes: 60
+  jwt_refresh_expiration_minutes: 1440 # 24 hours
+  cookie:
+    name: "_auth"
+    path: "/"
+    http_only: true
+    secure: false
+    same_site: "lax"
+# Storage configuration
+storage:
+  slides_dir: "./slides"
+  masks_dir: "./masks"
+  cache_size: 100
+# Logging configuration
+logging:
+  level: "info"

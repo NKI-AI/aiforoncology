@@ -1,0 +1,78 @@
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@bazel_skylib//rules:copy_directory.bzl", "copy_directory")
+load("@rules_go//go:def.bzl", "go_binary")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+# This is for the uid/guid of the nonroot user in the container.
+NONROOT = "65532"
+
+OWNER = "{}.{}".format(NONROOT, NONROOT)
+
+go_binary(
+    name = "slidescope",
+    # Just a simple alias to the actual binary
+    embed = ["//aifo/slidescope/cmd/slidescope:slidescope_lib"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/slidescope/internal/datasources",
+        "//aifo/slidescope/internal/server",
+    ],
+)
+
+filegroup(
+    name = "config",
+    srcs = [
+        "config.yaml",
+        "config.yaml.example",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "slidescope_tar",
+    srcs = [
+        ":slidescope",
+    ],
+    mode = "0755",
+    owner = OWNER,
+)
+
+pkg_tar(
+    name = "slidescope_config_tar",
+    srcs = [
+        ":config",
+    ],
+    mode = "0644",
+    owner = OWNER,
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base",
+    entrypoint = ["/slidescope"],
+    tars = [
+        ":slidescope_tar",
+        ":slidescope_config_tar",
+    ],
+)
+
+platform_transition_filegroup(
+    name = "image_linux_amd64",
+    srcs = [":image"],
+    target_platform = "@rules_go//go/toolchain:linux_amd64",
+)
+
+platform_transition_filegroup(
+    name = "image_linux_arm64",
+    srcs = [":image"],
+    target_platform = "@rules_go//go/toolchain:linux_arm64",
+)
+
+oci_image_index(
+    name = "images",
+    images = [
+        ":image_linux_amd64",
+        ":image_linux_arm64",
+    ],
+)

@@ -1,0 +1,18 @@
+# Full protocol radiologists' performance parameters
+sensitivity_full = 0.92
+specificity_full = 0.95
+
+# Abbreviated protocol radiologists' performance parameters
+sensitivity_abbr = 0.90
+specificity_abbr = 0.92
+
+# AI model performance parameters
+sensitivity_ai = 0.80
+specificity_ai = 0.80
+
+# Malignancy rate
+prevalence = 0.0146
+
+# Protocol duration (in seconds)
+full_time = 768  # 12 minutes, 48 seconds
+abbr_time = 342  # 5 minutes, 42 seconds

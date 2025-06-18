@@ -1,0 +1,36 @@
+<AifoModelConfiguration>
+  <ModelName>Tissue/background model</ModelName>
+  <Version>1.0</Version>
+  <Task>
+    <Type>Segmentation</Type>
+    <MergeMethod>crop</MergeMethod>
+  </Task>
+  <MPP>12.0</MPP>
+  <TileSize>
+    <Width>1024</Width>
+    <Height>1024</Height>
+  </TileSize>
+  <TileOverlap>
+    <Width>384</Width>
+    <Height>384</Height>
+  </TileOverlap>
+  <Labels>
+    <Label>
+      <Name>Background</Name>
+      <HexColor>#0000ff</HexColor>
+      <Index>1</Index>
+    </Label>
+  </Labels>
+  <Normalization>
+    <Mean>
+      <Channel0>0.485</Channel0>
+      <Channel1>0.456</Channel1>
+      <Channel2>0.406</Channel2>
+    </Mean>
+    <Std>
+      <Channel0>0.229</Channel0>
+      <Channel1>0.224</Channel1>
+      <Channel2>0.225</Channel2>
+    </Std>
+  </Normalization>
+</AifoModelConfiguration>

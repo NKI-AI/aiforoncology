@@ -1,0 +1,174 @@
+trainer:
+  class_path: eva.Trainer
+  init_args:
+    n_runs: &N_RUNS ${oc.env:N_RUNS, 5}
+    default_root_dir: &OUTPUT_ROOT ${oc.env:OUTPUT_ROOT, ${oc.env:SCRATCH}/output}
+    max_steps: &MAX_STEPS ${oc.env:MAX_STEPS, 5000}
+    callbacks:
+      - class_path: eva.callbacks.ConfigurationLogger
+      - class_path: lightning.pytorch.callbacks.TQDMProgressBar
+        init_args:
+          refresh_rate: ${oc.env:TQDM_REFRESH_RATE, 1}
+      - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+        init_args:
+          filename: best
+          save_last: ${oc.env:SAVE_LAST, false}
+          save_top_k: 1
+          monitor: &MONITOR_METRIC ${oc.env:MONITOR_METRIC, 'val/DiceScore'}
+          mode: &MONITOR_METRIC_MODE ${oc.env:MONITOR_METRIC_MODE, max}
+      - class_path: lightning.pytorch.callbacks.EarlyStopping
+        init_args:
+          min_delta: 0
+          patience: ${oc.env:PATIENCE, 100}
+          monitor: *MONITOR_METRIC
+          mode: *MONITOR_METRIC_MODE
+      - class_path: eva.callbacks.SegmentationEmbeddingsWriter
+        init_args:
+          output_dir: &DATASET_EMBEDDINGS_ROOT ${oc.env:EMBEDDINGS_ROOT, ${oc.env:SCRATCH}/embeddings}
+          dataloader_idx_map:
+            0: train
+            1: val
+          overwrite: true
+          backbone:
+            class_path: fef.models.ViTWrapper
+            init_args:
+              model_name: ${oc.env:MODEL_NAME, vit_small_patch16_224}
+              pretrained: False
+              checkpoint_path: ${oc.env:CKPT_PATH, ${oc.env:SCRATCH}/timm_checkpoint.pth}
+              output_type: PATCH
+              model_kwargs:
+                in_chans: 1
+                reg_tokens: 4
+                init_values: 1e-5
+                no_embed_class: True
+                num_classes: 0
+                dynamic_img_size: True
+              inferer:
+                class_path: monai.inferers.SliceInferer
+                init_args:
+                  overlap: 0
+                  roi_size: [224, 224]
+                  sw_batch_size: 100
+                  spatial_dim: 0
+    logger:
+      - class_path: lightning.pytorch.loggers.TensorBoardLogger
+        init_args:
+          save_dir: *OUTPUT_ROOT
+          name: ""
+model:
+  class_path: fef.models.SemanticSegmentation3dModule
+  init_args:
+    decoder:
+      class_path: fef.models.Conv3dLinear
+      init_args:
+        in_features: ${oc.env:IN_FEATURES, 384}
+        num_classes: &NUM_CLASSES 4
+    criterion:
+      class_path: eva.core.losses.CrossEntropyLoss
+      init_args:
+        weight: [0.05, 0.5, 2.0, 2.0]
+    optimizer:
+      class_path: torch.optim.AdamW
+      init_args:
+        lr: ${oc.env:LR_VALUE, 0.001}
+    lr_scheduler:
+      class_path: torch.optim.lr_scheduler.PolynomialLR
+      init_args:
+        total_iters: *MAX_STEPS
+        power: 0.9
+    postprocess:
+      predictions_transforms:
+        - class_path: eva.core.models.transforms.AsDiscrete
+          init_args:
+            argmax: true
+            to_onehot: *NUM_CLASSES
+      targets_transforms:
+        - class_path: fef.transforms.ChannelUnsqueeze
+          init_args:
+            dim: 1
+        - class_path: eva.core.models.transforms.AsDiscrete
+          init_args:
+            to_onehot: *NUM_CLASSES
+    metrics:
+      common:
+        - class_path: eva.metrics.AverageLoss
+      evaluation:
+        - class_path: torchmetrics.segmentation.DiceScore
+          init_args:
+            num_classes: *NUM_CLASSES
+            include_background: false
+            average: macro
+            input_format: one-hot
+        - class_path: torchmetrics.ClasswiseWrapper
+          init_args:
+            metric:
+              class_path: eva.vision.metrics.MonaiDiceScore
+              init_args:
+                include_background: true
+                num_classes: *NUM_CLASSES
+                input_format: one-hot
+                reduction: none
+            prefix: DiceScore_
+            labels:
+              - background
+              - kidney
+              - tumor
+              - cyst
+    save_decoder_only: false
+data:
+  class_path: eva.DataModule
+  init_args:
+    datasets:
+      train:
+        class_path: eva.vision.datasets.EmbeddingsSegmentationDataset
+        init_args: &DATASET_ARGS
+          root: *DATASET_EMBEDDINGS_ROOT
+          manifest_file: manifest.csv
+          split: train
+      val:
+        class_path: eva.vision.datasets.EmbeddingsSegmentationDataset
+        init_args:
+          !!merge <<: *DATASET_ARGS
+          split: val
+      predict:
+        - class_path: fef.datasets.KiTS23
+          init_args: &PREDICT_DATASET_ARGS
+            root: ${oc.env:DATA_ROOT, ${oc.env:SCRATCH}/kits23}
+            split: train
+            transforms:
+              class_path: torchvision.transforms.v2.Compose
+              init_args:
+                transforms:
+                  - class_path: fef.transforms.Resize
+                    init_args:
+                      spatial_size: ${oc.env:RESIZE_DIM, [-1, 224, 224]}
+                      mode: trilinear
+                      mask_mode: nearest-exact
+                  - class_path: fef.transforms.ValueClipper
+                    init_args:
+                      min_val: ${oc.env:MIN, -1008.0}
+                      max_val: ${oc.env:MAX, 822.0}
+                  - class_path: torchvision.transforms.v2.Normalize
+                    init_args:
+                      mean: ${oc.env:MEAN, [-86.80862426757812]}
+                      std: ${oc.env:STD, [322.63470458984375]}
+                  - class_path: fef.transforms.ToDtype
+                    init_args:
+                      dtype:
+                        torchvision.tv_tensors.Mask: torch.int64
+                        eva.vision.data.tv_tensors.Volume: torch.float32
+        - class_path: fef.datasets.KiTS23
+          init_args:
+            !!merge <<: *PREDICT_DATASET_ARGS
+            split: val
+    dataloaders:
+      train:
+        batch_size: &BATCH_SIZE ${oc.env:BATCH_SIZE, 1}
+        num_workers: &N_DATA_WORKERS ${oc.env:N_DATA_WORKERS, 8}
+        shuffle: true
+      val:
+        batch_size: *BATCH_SIZE
+        num_workers: *N_DATA_WORKERS
+      predict:
+        batch_size: &PREDICT_BATCH_SIZE ${oc.env:PREDICT_BATCH_SIZE, 1}
+        num_workers: *N_DATA_WORKERS

@@ -1,0 +1,17 @@
+# SlideScope Import Configuration
+# This file defines slides and masks to be imported
+# Example with a single mask
+- image_name: "Slide 1"
+  image_path: "image.svs"
+  mask_path: "mask.tiff"
+# Example with multiple masks
+- image_name: "Slide 2"
+  image_path: "image2.svs"
+  mask_path:
+    - "mask2.tiff"
+    - "another_mask.tiff"
+# Example with absolute paths
+- image_name: "Slide 3"
+  image_path: "/path/to/image3.svs"
+  mask_path:
+    - "/path/to/mask3.tiff"

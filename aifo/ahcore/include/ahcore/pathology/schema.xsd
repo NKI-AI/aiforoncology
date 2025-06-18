@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+>
+    <xs:element name="AifoModelConfiguration">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ModelName" type="xs:string" />
+                <xs:element name="Version" type="xs:string" />
+                <xs:element name="MPP" type="xs:float" />
+                <xs:element name="TileSize">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Width" type="xs:int" />
+                            <xs:element name="Height" type="xs:int" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="TileOverlap">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Width" type="xs:int" />
+                            <xs:element name="Height" type="xs:int" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Task">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Type" type="xs:string" />
+                            <xs:element
+                name="MergeMethod"
+                type="xs:string"
+                minOccurs="0"
+              />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Labels" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Label" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element
+                      name="Name"
+                      type="xs:string"
+                    />
+                                        <xs:element
+                      name="HexColor"
+                      type="xs:string"
+                    />
+                                        <xs:element
+                      name="Index"
+                      type="xs:int"
+                    />
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Normalization">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Mean" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element
+                      name="Channel0"
+                      type="xs:float"
+                    />
+                                        <xs:element
+                      name="Channel1"
+                      type="xs:float"
+                    />
+                                        <xs:element
+                      name="Channel2"
+                      type="xs:float"
+                    />
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="Std" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element
+                      name="Channel0"
+                      type="xs:float"
+                    />
+                                        <xs:element
+                      name="Channel1"
+                      type="xs:float"
+                    />
+                                        <xs:element
+                      name="Channel2"
+                      type="xs:float"
+                    />
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

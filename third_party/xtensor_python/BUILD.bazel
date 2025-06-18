@@ -1,0 +1,104 @@
+cc_library(
+    name = "numpy_headers",
+    hdrs = [
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/__multiarray_api.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/__ufunc_api.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/_neighborhood_iterator_imp.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/_numpyconfig.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/_public_dtype_api_table.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/arrayobject.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/arrayscalars.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/dtype_api.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/ndarrayobject.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/ndarraytypes.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/npy_1_7_deprecated_api.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/npy_2_compat.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/npy_common.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/npy_cpu.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/npy_endian.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/npy_math.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/numpyconfig.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/ufuncobject.h",
+        "@@rules_python~~pip~pip_311_numpy//:site-packages/numpy/_core/include/numpy/utils.h",
+    ],
+    strip_include_prefix = "/site-packages/numpy/_core/include",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "xtensor_python",
+    hdrs = glob(["include/xtensor-python/*.hpp"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":numpy_headers",
+        "@pybind11",
+        "@xtensor",
+    ],
+)
+
+# Test target
+# cc_test(
+#     name = "test_xtensor_python",
+#     srcs = [
+#         "test/main.cpp",
+#         "test/test_pyarray.cpp",
+#         "test/test_pyarray_traits.cpp",
+#         "test/test_pytensor.cpp",
+#         "test/test_pyvectorize.cpp",
+#         "test/test_sfinae.cpp",
+#         "test/test_common.hpp",
+#     ],
+#     deps = [
+#         ":xtensor_python",
+#         "@googletest//:gtest",
+#         "@googletest//:gtest_main",
+#     ],
+#     copts = select({
+#         "@platforms//os:windows": ["/EHsc", "/MP", "/bigobj"],
+#         "//conditions:default": ["-std=c++17", "-march=native"],
+#     }),
+# )
+
+# Benchmark target
+# TODO: This is a pybind target
+# cc_binary(
+#     name = "benchmark_xtensor_python",
+#     srcs = ["benchmark/main.cpp"],
+#     deps = [":xtensor_python"],
+#     copts = select({
+#         "@platforms//os:windows": ["/EHsc", "/MP", "/bigobj"],
+#         "//conditions:default": ["-std=c++17", "-march=native", "-fvisibility=hidden"],
+#     }),
+# )
+
+# Python benchmark targets
+# py_binary(
+#     name = "benchmark_pyarray",
+#     srcs = ["benchmark/benchmark_pyarray.py"],
+#     data = [":benchmark_xtensor_python"],
+# )
+
+# py_binary(
+#     name = "benchmark_pytensor",
+#     srcs = ["benchmark/benchmark_pytensor.py"],
+#     data = [":benchmark_xtensor_python"],
+# )
+
+# py_binary(
+#     name = "benchmark_pybind_array",
+#     srcs = ["benchmark/benchmark_pybind_array.py"],
+#     data = [":benchmark_xtensor_python"],
+# )
+
+# py_binary(
+#     name = "benchmark_pyvectorize",
+#     srcs = ["benchmark/benchmark_pyvectorize.py"],
+#     data = [":benchmark_xtensor_python"],
+# )
+
+# py_binary(
+#     name = "benchmark_pybind_vectorize",
+#     srcs = ["benchmark/benchmark_pybind_vectorize.py"],
+#     data = [":benchmark_xtensor_python"],
+# )

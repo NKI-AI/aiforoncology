@@ -1,0 +1,27 @@
+// Generated with t2s --filename tsconfig.json > .swcrc, modified slightly
+{
+  "sourceMaps": "inline",
+  "module": {
+    "type": "es6",
+    "strictMode": true
+  },
+  "jsc": {
+    "externalHelpers": false,
+    "target": "es2020",
+    "parser": {
+      "syntax": "typescript",
+      "tsx": true,
+      "decorators": false,
+      "dynamicImport": true
+    },
+    "transform": {
+      "legacyDecorator": true,
+      "decoratorMetadata": false,
+      "react": {
+        "runtime": "automatic",
+        "importSource": "react"
+      }
+    },
+    "keepClassNames": false
+  }
+}

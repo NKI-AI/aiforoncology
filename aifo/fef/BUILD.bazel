@@ -1,0 +1,61 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@fef_pip//:requirements.bzl", "requirement")
+load("@rules_multirun//:defs.bzl", "multirun")
+load("@rules_uv//uv:pip.bzl", "pip_compile")
+
+pip_compile(
+    name = "generate_requirements_linux_txt",
+    # The many linux version of this pip compilation is above the default due to onnxruntime.
+    # Issue: https://github.com/astral-sh/uv/issues/3842, future uv updates might up the default.
+    python_platform = "x86_64-manylinux_2_28",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_linux.txt",
+)
+
+pip_compile(
+    name = "generate_requirements_darwin_txt",
+    # The many linux version of this pip compilation is above the default due to onnxruntime.
+    # Issue: https://github.com/astral-sh/uv/issues/3842, future uv updates might up the default.
+    python_platform = "aarch64-manylinux_2_28",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_darwin.txt",
+)
+
+multirun(
+    name = "generate_requirements_lock",
+    commands = [
+        ":generate_requirements_linux_txt",
+        ":generate_requirements_darwin_txt",
+    ],
+    # Running in a single threaded mode allows consecutive `uv` invocations to benefit
+    # from the `uv` cache from the first run.
+    jobs = 1,
+)
+
+filegroup(
+    name = "configs",
+    srcs = glob(["fef/configs/**/*.yaml"]),
+    visibility = ["//visibility:private"],
+)
+
+py_library(
+    name = "fef",
+    srcs = glob(["fef/**/*.py"]),
+    data = [":configs"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("typing-extensions"),
+    ],
+)
+
+py_binary(
+    name = "eva",
+    srcs = ["fef/run_eva.py"],
+    main = "fef/run_eva.py",
+    deps = [
+        "//aifo/fef",
+        requirement("kaiko-eva"),
+        requirement("simpleitk"),
+    ],
+)

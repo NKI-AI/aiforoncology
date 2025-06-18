@@ -1,0 +1,22 @@
+_target_: ahcore.utils.data.DataDescription
+data_dir: ${oc.env:DATA_DIR}
+annotations_dir: ${oc.env:ANNOTATIONS_DIR}
+manifest_database_uri: ${oc.env:DATABASE_URI}
+manifest_name: "v1.0"
+split_version: "v1.0"
+use_roi: False # This can be inferenced from the SlideAnnotations. If they have a ROI it should be used. Perhaps explicit is also good
+mask_threshold: 0.5 # This value needs to be large enough to ensure you are not sampling empty tiles with the random sampling
+apply_color_profile: False
+training_grid:
+  mpp: 2.0
+  random_sample_in_grid: true
+  tile_overlap: [128, 128]
+  tile_size: [1024, 1024]
+inference_grid:
+  mpp: 2.0
+  random_sample_in_grid: false
+  tile_size: [1024, 1024]
+  tile_overlap: [128, 128]
+num_classes: 2 # Can't this be inferred?
+index_map:
+  DCIS: 1 # This is still required because of the way the metrics are handled.

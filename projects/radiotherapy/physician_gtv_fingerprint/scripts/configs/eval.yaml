@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - _self_
+  - data: ct # choose datamodule with `test_dataloader()` for evaluation
+  - model: classifier
+  - logger: null
+  - trainer: default
+  - paths: default
+  - extras: default
+  - hydra: default
+task_name: "eval"
+tags: ["dev"]
+# MLflow configuration
+mlflow:
+  tracking_uri: "http://gaia:5001"
+  experiment_name: "strat_ensemble"

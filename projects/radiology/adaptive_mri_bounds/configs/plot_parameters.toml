@@ -1,0 +1,15 @@
+title_size = 18
+label_size = 16
+tick_size = 14
+legend_size = 14
+linewidth = 1.8
+false_zero = 20
+recall_ylim = 0.15
+time_ylim = 1.1
+format = 'svg'
+
+[colors]
+full = 'blue'
+abbr = 'red'
+ai = 'green'
+ai_alpha = 0.1

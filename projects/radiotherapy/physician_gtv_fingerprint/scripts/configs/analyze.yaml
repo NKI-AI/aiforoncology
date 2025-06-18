@@ -1,0 +1,12 @@
+# @package _global_
+defaults:
+  - _self_
+  - paths: default
+  - extras: default
+  - hydra: default
+task_name: "analyze"
+tags: ["dev"]
+# MLflow configuration
+mlflow:
+  tracking_uri: "http://gaia:5001"
+  experiment_name: "strat_ensemble"

@@ -1,0 +1,5 @@
+_target_: head_calibration.losses.loss_factory.LossFactory
+losses:
+  - cross_entropy:
+      _target_: head_calibration.losses.ce_loss.CrossEntropyLoss
+      weight: 1.0

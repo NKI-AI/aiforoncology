@@ -1,0 +1,187 @@
+load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "concepts",
+    hdrs = ["include/aifocore/concepts/numeric.h"],
+    strip_include_prefix = "include",
+    visibility = ["//aifo:__subpackages__"],
+    deps = [
+        "@cereal",
+        "@fmt",
+    ],
+)
+
+cc_library(
+    name = "ranges",
+    hdrs = ["include/aifocore/ranges/zip.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "tiling",
+    hdrs = ["include/aifocore/tiling/grid.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ranges",
+        "//aifo/aifocore:concepts",
+    ],
+)
+
+cc_library(
+    name = "status",
+    hdrs = [
+        "include/aifocore/status/status_macros.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_binary(
+    name = "trace_example",
+    srcs = ["src/status/trace_example.cpp"],
+    deps = [
+        ":status",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "tiling_python",
+    hdrs = ["include/aifocore/tiling/python/grid_wrapper.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "utilities-zip",
+    hdrs = ["include/aifocore/utilities/zip.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = ["@minizip"],
+)
+
+cc_library(
+    name = "utilities-fmt",
+    hdrs = ["include/aifocore/utilities/fmt.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = ["@fmt"],
+)
+
+cc_library(
+    name = "utilities-vips",
+    hdrs = [
+        "include/aifocore/utilities/pyvips.h",
+        "include/aifocore/utilities/vips.h",
+        ":status",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":status",
+        "@libvips//:libvips-cpp",
+        "@pybind11",
+    ],
+)
+
+cc_library(
+    name = "utilities",
+    hdrs = [
+        "include/aifocore/utilities/spinners.h",
+        "include/aifocore/utilities/temporary.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":status",
+        ":utilities-fmt",
+        ":utilities-vips",
+        ":utilities-zip",
+    ],
+)
+
+cc_library(
+    name = "shared",
+    hdrs = [
+        "include/aifocore/shared/exceptions.h",
+        "include/aifocore/shared/vector.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost.atomic",
+        "@boost.interprocess",
+    ],
+)
+
+cc_library(
+    name = "shared_python",
+    hdrs = ["include/aifocore/shared/python/vector.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+pybind_extension(
+    name = "aifocore/shm/vector",
+    srcs = ["//aifo/aifocore/src/shared/python:vector_module"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit_vector"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":shared",
+        ":shared_python",
+    ],
+)
+
+pybind_extension(
+    name = "aifocore/tiling/_grid",
+    srcs = ["//aifo/aifocore/src/tiling/python:grid_module"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__grid"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "//aifo/aifocore:tiling",
+        "//aifo/aifocore:tiling_python",
+    ],
+)
+
+py_library(
+    name = "aifocore_tiling",
+    srcs = glob(["**/*.py"]),
+    data = [":aifocore/tiling/_grid"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "aifocore_shm",
+    srcs = [],
+    data = [":aifocore/shm/vector"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "aifocore",
+    srcs = glob(["aifocore/**/*.py"]),
+    data = [
+        ":aifocore_shm",
+        ":aifocore_tiling",
+    ],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [],
+)

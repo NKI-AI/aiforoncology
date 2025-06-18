@@ -1,0 +1,64 @@
+load("@pip//:requirements.bzl", "requirement")
+
+project_requirements = [
+    requirement("matplotlib"),
+    requirement("numpy"),
+    requirement("toml"),
+]
+
+test_requirements = [
+    requirement("pytest"),
+]
+
+py_library(
+    name = "lib",
+    srcs = glob(
+        ["**/*.py"],
+        exclude = [
+            "tests/**/*.py",
+            "main.py",
+        ],
+    ),
+    data = glob(["**/*.toml"]),
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = project_requirements,
+)
+
+py_binary(
+    name = "main",
+    srcs = ["main.py"],
+    imports = ["."],
+    deps = project_requirements + [
+        ":lib",
+    ],
+)
+
+# Test that directly imports the main function
+py_test(
+    name = "main_test",
+    srcs = ["tests/main_test.py"],
+    args = ["-xvs"],
+    imports = [".."],  # Allow imports from the parent directory
+    # Use pytest as the test runner
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":lib",
+        ":main",
+    ] + test_requirements,
+)
+
+# Test that imports main function directly
+py_test(
+    name = "direct_main_test",
+    srcs = ["tests/direct_main_test.py"],
+    args = ["-xvs"],
+    # Use pytest as the test runner
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":lib",
+        ":main",
+    ] + test_requirements,
+)

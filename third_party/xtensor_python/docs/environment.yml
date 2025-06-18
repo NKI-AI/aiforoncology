@@ -1,0 +1,6 @@
+name: xtensor-python-docs
+channels:
+  - conda-forge
+dependencies:
+  - breathe
+  - sphinx_rtd_theme

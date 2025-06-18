@@ -1,0 +1,59 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("@gazelle//:def.bzl", "gazelle", "gazelle_test")
+load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+
+package(default_visibility = ["//visibility:public"])
+
+npm_link_all_packages(name = "node_modules")
+
+exports_files(
+    [
+        "buf.yaml",
+        ".ruff.toml",
+        ".shellcheckrc",
+        ".editorconfig",
+        ".clang-format",
+        ".clang-tidy",
+    ],
+)
+
+alias(
+    name = "format",
+    actual = "//tools/format",
+)
+
+alias(
+    name = "ipython",
+    actual = "//bazel:ipython",
+)
+
+alias(
+    name = "mlflow",
+    actual = "//tools/utilities:mlflow",
+)
+
+alias(
+    name = "tensorboard",
+    actual = "//tools/utilities:tensorboard",
+)
+
+refresh_compile_commands(
+    name = "refresh_compile_commands",
+    exclude_external_sources = True,
+    targets = [
+        "//aifo/...",
+        "//projects/...",
+    ],
+)
+
+js_library(
+    name = "prettierrc",
+    srcs = ["prettier.config.cjs"],
+    visibility = ["//tools/format:__pkg__"],
+    deps = [
+        ":node_modules/@prettier/plugin-xml",
+        ":node_modules/prettier-plugin-gherkin",
+        ":node_modules/prettier-plugin-sql",
+    ],
+)

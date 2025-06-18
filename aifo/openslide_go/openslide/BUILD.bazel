@@ -1,0 +1,27 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "openslide",
+    srcs = [
+        "argb_to_rgba.h",
+        "openslide.go",
+    ],
+    cdeps = [
+        "@openslide//:openslide",
+    ],
+    cgo = True,
+    copts = ["-g -Wall"],
+    importpath = "aifo.dev/aifo/openslide_go/openslide",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_image//draw"],
+)
+
+go_test(
+    name = "openslide_test",
+    srcs = ["openslide_test.go"],
+    data = [
+        "//aifo/openslide_go/openslide/testdata:CMU-1-tiff",
+    ],
+    embed = [":openslide"],
+    tags = ["manual"],
+)

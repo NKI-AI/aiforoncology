@@ -1,0 +1,13 @@
+{
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.git",
+    "**/.venv",
+    "**/venv",
+    "**/env",
+    "bazel-bin",
+    "bazel-out",
+    "bazel-testlogs"
+  ]
+}

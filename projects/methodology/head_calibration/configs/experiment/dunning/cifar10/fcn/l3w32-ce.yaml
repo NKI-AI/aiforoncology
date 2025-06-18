@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /data: cifar
+  - override /model: fcn/l3_w32
+tags: ["cifar10", "fcn"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+model:
+  net:
+    num_channels: 3
+    img_dim: 32
+data:
+  batch_size: 2048
+experiment_name: "dunning-cifar10_fcn"
+run_label: "l3_w32_ce"

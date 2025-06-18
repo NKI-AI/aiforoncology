@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@import "ol/ol.css";
+
+/* Global styles for the SlideScope viewer */
+
+/* Card shadows */
+.card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Toolbar buttons */
+@layer components {
+  .toolbar-button {
+    @apply p-2 rounded-full text-white/80 hover:text-white hover:bg-indigo-600 focus:outline-none transition duration-150;
+  }
+
+  /* Control cards */
+  .control-card {
+    @apply bg-white rounded-lg overflow-hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: fadeSlideIn 0.2s ease-out forwards;
+  }
+}
+
+/* Animations */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #3949ab;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Make root element fill the viewport */
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+/* Ensure full height for the app */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}

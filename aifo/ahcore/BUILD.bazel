@@ -1,0 +1,216 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+
+cc_library(
+    name = "data",
+    srcs = [
+        "src/data/compression.cpp",
+        "src/data/metadata.cpp",
+    ],
+    hdrs = glob([
+        "include/ahcore/data/**/*.h",
+    ]),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":utilities",
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:tiling",
+        "//aifo/dlup:foreground",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@cereal",
+        "@libvips//:libvips-cpp",
+        "@spdlog",
+        "@xtensor",
+    ],
+)
+
+cc_library(
+    name = "utilities-torch",
+    hdrs = ["include/ahcore/utilities/torch.h"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = ["@libvips"] + select({
+        "@platforms//os:linux": [
+            "@libtorch_linux//:libtorch",
+            "@rules_cuda//cuda:runtime",
+        ],
+        "@platforms//os:macos": ["@libtorch_macos//:libtorch"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "utilities",
+    hdrs = glob(
+        ["include/ahcore/utilities/*.h"],
+        exclude = ["include/ahcore/utilities/torch.h"],
+    ),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":utilities-torch",
+        "@fmt",
+        "@minizip",
+    ],
+)
+
+# The bindings to python for the logging modules
+pybind_extension(
+    name = "logging_python",
+    srcs = ["src/logging.cpp"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit_logging_python"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":utilities",
+        "@spdlog",
+    ],
+)
+
+cc_library(
+    name = "pathology-configuration",
+    srcs = [
+        "src/pathology/config/process_config.cpp",
+        "src/pathology/configuration.cpp",
+    ],
+    hdrs = [
+        "include/ahcore/pathology/config/process_config.h",
+        "include/ahcore/pathology/configuration.h",
+    ],
+    strip_include_prefix = "include",
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//third_party/CLI11",
+        "@libxml2",
+    ],
+)
+
+cc_library(
+    name = "pathology-visualization",
+    srcs = [
+        "src/pathology/visualization/segmentation.cpp",
+    ],
+    hdrs = [
+        "include/ahcore/pathology/visualization/segmentation.h",
+    ],
+    strip_include_prefix = "include",
+    deps = [
+        ":pathology-configuration",
+        "//aifo/aifocore:concepts",
+        "@libvips//:libvips-cpp",
+    ],
+)
+
+cc_library(
+    name = "pathology-transforms",
+    hdrs = [
+        "include/ahcore/pathology/transforms/base_transform.h",
+        "include/ahcore/pathology/transforms/pre_writer_transforms.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "inference",
+    srcs = [
+        "src/pathology/inference.cpp",
+    ],
+    copts = select({
+        "@platforms//os:linux": ["-DWITH_CUDA"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":data",
+        ":pathology-configuration",
+        ":pathology-transforms",
+        ":pathology-visualization",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:status",
+        "//aifo/dlup:foreground",
+        "//aifo/dlup:utilities",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@libvips//:libvips-cpp",
+        "@libxml2",
+        "@spdlog",
+    ] + select({
+        "@platforms//os:linux": [
+            "@libtorch_linux//:libtorch",
+            "@rules_cuda//cuda:runtime",
+        ],
+        "@platforms//os:macos": ["@libtorch_macos//:libtorch"],
+        "//conditions:default": [],
+    }),
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob([
+        "src/**/*.cpp",
+        "src/**/*.h",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "headers",
+    srcs = glob([
+        "include/**/*.h",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "ahcore",
+    srcs = glob(["ahcore/**/*.py"]),
+    data = [
+        "ahcore/config",
+        "@openslide_python",
+        "@pyvips",
+    ],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/dlup",
+        requirement("python-dotenv"),
+        requirement("h5py"),
+        requirement("zarr"),
+        requirement("lightning"),
+        requirement("hydra-core"),
+        requirement("hydra-colorlog"),
+        requirement("rich"),
+        requirement("pydantic"),
+        requirement("sqlalchemy"),
+        requirement("imageio"),  # TODO: This dependency should go
+        requirement("kornia"),
+        requirement("monai"),
+        requirement("matplotlib"),  # For the TileVisualizationCallback
+        requirement("tensorboard"),
+        requirement("mlflow"),
+        requirement("imagecodecs"),
+        requirement("numpy"),
+        requirement("einops"),
+    ],
+)
+
+# Command-line interface executable
+py_binary(
+    name = "cli",
+    srcs = ["ahcore/cli/cli.py"],
+    data = ["ahcore/cli/fomo_jits/config.yaml"],
+    main = "ahcore/cli/cli.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/ahcore",
+        requirement("huggingface_hub"),
+        requirement("timm"),
+        requirement("torch"),
+        requirement("transformers"),
+    ],
+)

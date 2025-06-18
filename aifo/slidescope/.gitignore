@@ -1,0 +1,4 @@
+static/slides/assets
+static/slides/.vite/manifest.json
+node_modules/*
+node_modules/.bin/*

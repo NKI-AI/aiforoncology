@@ -1,0 +1,29 @@
+load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+
+filegroup(
+    name = "default-config",
+    srcs = [
+        "dinov2/configs/ssl_default_config.yaml",
+    ],
+)
+
+py_library(
+    name = "dinov2",
+    srcs = glob(["**/*.py"]),
+    data = [":default-config"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("torch"),
+        requirement("torchvision"),
+        requirement("torchmetrics"),
+        requirement("iopath"),
+        requirement("omegaconf"),
+        requirement("fvcore"),
+        requirement("tensorboard"),
+    ] + select({
+        "@platforms//os:linux": [requirement("xformers")],
+        "//conditions:default": [],
+    }),
+)

@@ -1,0 +1,6 @@
+_target_: head_calibration.losses.loss_factory.LossFactory
+losses:
+  - cross_entropy:
+      _target_: head_calibration.losses.modified_ce_logits_loss.ModifiedCEWithLogitsLoss
+      weight: 1.0
+      beta: 0.5

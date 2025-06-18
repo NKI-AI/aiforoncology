@@ -1,0 +1,3 @@
+vllm~=0.8.0
+datasets==3.3.2
+setuptools==73.0.1

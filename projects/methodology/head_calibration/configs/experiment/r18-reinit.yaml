@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /data: cifar
+  - override /model: resnet/resnet18
+tags: ["cifar10", "resnet"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+model:
+  net:
+    num_channels: 3
+data:
+  batch_size: 1024
+  cifar_version: 10
+experiment_name: "train+reinit-cifar10_resnet"
+run_label: "r18"

@@ -1,0 +1,70 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "get_region",
+    srcs = ["get_region.cpp"],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/dlup:backends",
+        "//third_party/CLI11",
+    ],
+)
+
+cc_binary(
+    name = "get_region2",
+    srcs = ["get_region2.cpp"],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/dlup:backends",
+        "//third_party/CLI11",
+    ],
+)
+
+cc_binary(
+    name = "get_scaled_region",
+    srcs = ["get_scaled_region.cpp"],
+    deps = [
+        "//aifo/aifocore:status",
+        "//aifo/dlup:backends",
+        "//third_party/CLI11",
+    ],
+)
+
+cc_binary(
+    name = "get_thumbnail",
+    srcs = ["get_thumbnail.cpp"],
+    deps = [
+        "//aifo/dlup:backends",
+        "//third_party/CLI11",
+    ],
+)
+
+cc_binary(
+    name = "get_info",
+    srcs = ["get_info.cpp"],
+    deps = [
+        "//aifo/dlup:backends",
+        "//third_party/CLI11",
+    ],
+)
+
+cc_binary(
+    name = "get_foreground",
+    srcs = ["get_foreground.cpp"],
+    deps = [
+        "//aifo/aifocore:tiling",
+        "//aifo/dlup:backends",
+        "//aifo/dlup:foreground",
+        "//third_party/CLI11",
+        "@spdlog",
+    ],
+)
+
+cc_binary(
+    name = "detect_filetype",
+    srcs = ["detect_filetype.cpp"],
+    deps = [
+        "//aifo/dlup:utilities",
+        "//third_party/CLI11",
+    ],
+)

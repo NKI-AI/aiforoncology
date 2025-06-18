@@ -1,0 +1,6 @@
+_target_: head_calibration.models.components.simple_conv_net.SimpleConvNet
+num_classes: 10
+num_channels: 3
+num_layers: 3
+img_dim: 32
+num_filters: 32

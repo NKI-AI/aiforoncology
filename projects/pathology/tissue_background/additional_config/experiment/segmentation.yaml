@@ -1,0 +1,23 @@
+# @package _global_
+# to execute this experiment run:
+# bazelisk run //projects/pathology/tissue_background:train -- experiment=segmentation
+defaults:
+  - override /augmentations: segmentation
+  - override /lit_module: monai_segmentation/unet
+  - override /callbacks: default
+  - override /data_description: tissue_background
+  - override /datamodule: dataset
+  - override /losses: segmentation_ce
+  - override /metrics: segmentation
+  - override /pre_transform: segmentation
+  - override /logger: mlflow
+  - override /trainer: default
+  - override /task: segmentation
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# Set experiment to true -- allowing any checks to run for experiment
+tags: ["dev"]
+# name of the run determines folder name in logs (if the name is 'default' -- it will complain!)
+task_name: "tissue_background"
+seed: 42
