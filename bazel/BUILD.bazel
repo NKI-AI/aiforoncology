@@ -1,0 +1,18 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary")
+load("@pip//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["system.bzl"])
+
+py_binary(
+    name = "ipython",
+    srcs = ["ipython_shell.py"],
+    main = "ipython_shell.py",
+    deps = [
+        "//aifo/ahcore",
+        "//aifo/aifocore",
+        "//aifo/dlup",
+        requirement("ipython"),
+    ],
+)
