@@ -1,0 +1,90 @@
+cc_test(
+    name = "test_abstract_backend",
+    srcs = ["dlup/backends/abstract.cpp"],
+    deps = [
+        "//aifo/dlup:backends",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+genrule(
+    name = "test_data_file_define",
+    srcs = ["//tests/files:checkerboard.svs"],
+    outs = ["test_data_file.h"],
+    cmd = "echo '#define TEST_DATA_FILE \"$(execpath //tests/files:checkerboard.svs)\"' > $@",
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "test_vips_backend",
+    srcs = [
+        "dlup/backends/vips.cpp",
+        ":test_data_file_define",
+    ],
+    data = [
+        "//tests/files:checkerboard.svs",
+    ],
+    includes = ["."],
+    deps = [
+        "//aifo/dlup:backends",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_slideimage",
+    srcs = [
+        "dlup/slide_image.cpp",
+        ":test_data_file_define",
+    ],
+    data = [
+        "//tests/files:checkerboard.svs",
+    ],
+    includes = ["."],
+    deps = [
+        "//aifo/aifocore:utilities",
+        "//aifo/dlup:backends",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_utilities",
+    srcs = [
+        "dlup/utilities/filetype.cpp",
+    ],
+    deps = [
+        "//aifo/dlup:utilities",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_geometry_has_rois",
+    srcs = [
+        "dlup/geometry/has_rois_test.cpp",
+    ],
+    deps = [
+        "//aifo/aifocore:utilities",
+        "//aifo/dlup:geometry",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_slide_geometry",
+    srcs = [
+        "dlup/slide_geometry.cpp",
+    ],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/dlup:backends",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

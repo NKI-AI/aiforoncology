@@ -1,0 +1,14 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+py_test(
+    name = "layers_test",
+    srcs = ["layers_test.py"],
+    pytest_main = True,
+    deps = [
+        requirement("pytest"),
+        requirement("torch"),
+        requirement("torchvision"),
+        "//third_party/models/dinov2",
+    ],
+)

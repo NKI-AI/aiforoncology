@@ -1,0 +1,26 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@fef_pip//:requirements.bzl", "requirement")
+
+py_test(
+    name = "patch_embed_3d_test",
+    srcs = ["patch_embed_3d_test.py"],
+    pytest_main = True,
+    deps = [
+        "//aifo/fef",
+        requirement("kaiko-eva"),
+        requirement("pytest"),
+        requirement("torch"),
+    ],
+)
+
+py_test(
+    name = "vit_3d_test",
+    srcs = ["vit_3d_test.py"],
+    pytest_main = True,
+    deps = [
+        "//aifo/fef",
+        requirement("kaiko-eva"),
+        requirement("pytest"),
+        requirement("torch"),
+    ],
+)

@@ -1,0 +1,26 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+cc_test(
+    name = "test_shared_vector",
+    srcs = ["shared/vector.cpp"],
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:shared",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_status",
+    srcs = ["status/trace_test.cpp"],
+    deps = [
+        "//aifo/aifocore:status",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

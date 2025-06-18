@@ -1,0 +1,58 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+cc_test(
+    name = "test_tiling_grid",
+    srcs = ["tiling/grid.cpp"],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:tiling",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_disk_tile_reader",
+    srcs = ["data/readers/disk_tile_reader.cpp"],
+    deps = [
+        "//aifo/ahcore:data",
+        "//aifo/aifocore:concepts",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_data_metadata",
+    srcs = [
+        "data/metadata.cpp",
+    ],
+    deps = [
+        "//aifo/ahcore:data",
+        "//aifo/aifocore:concepts",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_data_compression",
+    srcs = ["data/compression.cpp"],
+    deps = [
+        "//aifo/ahcore:data",
+        "//aifo/aifocore:status",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "test_base_reader_average",
+    srcs = ["data/readers/base_reader_average.cpp"],
+    deps = [
+        "//aifo/ahcore:data",
+        "//aifo/aifocore:concepts",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
