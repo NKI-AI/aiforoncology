@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "slides",
+    srcs = [
+        "core.go",
+        "metadata.go",
+        "tiles.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/services/slides",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/fastslide_go",
+        "//aifo/libjxl_go",
+        "//aifo/openslide_go/openslide",
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/errors",
+        "//aifo/slideinsight/internal/server/middleware",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/slides",
+        "//aifo/slideinsight/internal/utils",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)

@@ -1,0 +1,29 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+exports_files([
+    "main.go",
+])
+
+go_library(
+    name = "slideinsight_lib",
+    srcs = ["main.go"],
+    importpath = "aifo.dev/aifo/slideinsight/cmd/slideinsight",
+    visibility = ["//aifo/slideinsight:__pkg__"],
+    deps = [
+        "//aifo/slideinsight/internal/config",
+        "//aifo/slideinsight/internal/datasources",
+        "//aifo/slideinsight/internal/datasources/database",
+        "//aifo/slideinsight/internal/server",
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/server/services",
+        "//aifo/slideinsight/internal/utils",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)
+
+go_binary(
+    name = "slideinsight",
+    embed = [":slideinsight_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,58 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@llm_serve_pip//:requirements.bzl", "requirement")
+load("@rules_multirun//:defs.bzl", "multirun")
+load("@rules_uv//uv:pip.bzl", "pip_compile")
+
+pip_compile(
+    name = "generate_requirements_linux_txt",
+    python_platform = "x86_64-unknown-linux-gnu",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_linux.txt",
+)
+
+pip_compile(
+    name = "generate_requirements_darwin_txt",
+    python_platform = "aarch64-apple-darwin",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_darwin.txt",
+)
+
+multirun(
+    name = "generate_requirements_lock",
+    commands = [
+        ":generate_requirements_linux_txt",
+        ":generate_requirements_darwin_txt",
+    ],
+    # Running in a single threaded mode allows consecutive `uv` invocations to benefit
+    # from the `uv` cache from the first run.
+    jobs = 1,
+)
+
+py_library(
+    name = "llm_serve",
+    srcs = glob(["llm_serve/**/*.py"]),
+    data = ["llm_serve/web/index.html"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("vllm"),
+        requirement("datasets"),
+    ],
+)
+
+py_binary(
+    name = "server",
+    srcs = ["llm_serve/web/server.py"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":llm_serve",
+    ],
+)
+
+py_binary(
+    name = "api_server",
+    srcs = ["llm_serve/api_server_wrapper.py"],
+    main = "llm_serve/api_server_wrapper.py",
+    deps = [":llm_serve"],
+)

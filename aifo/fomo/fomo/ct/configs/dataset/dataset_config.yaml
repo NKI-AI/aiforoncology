@@ -1,0 +1,39 @@
+# # PUBLIC DATASETS
+# #
+# # Medical Segmentation Decathlon: Liver
+- path: "/data/groups/public/archive/MSD/Task03_Liver"
+  extension: ".nii.gz"
+  exclude: "labelsTr|\\._"
+# # Medical Segmentation Decathlon: Pancreas
+- path: "/data/groups/public/archive/MSD/Task07_Pancreas"
+  extension: ".nii.gz"
+  exclude: "labelsTr|\\._"
+# # Medical Segmentation Decathlon: Hepatic Vessel
+- path: "/data/groups/public/archive/MSD/Task08_HepaticVessel"
+  extension: ".nii.gz"
+  exclude: "labelsTr|\\._"
+# # Medical Segmentation Decathlon: Spleen
+- path: "/data/groups/public/archive/MSD/Task09_Spleen"
+  extension: ".nii.gz"
+  exclude: "labelsTr|\\._"
+# # Medical Segmentation Decathlon: Colon
+- path: "/data/groups/public/archive/MSD/Task10_Colon"
+  extension: ".nii.gz"
+  exclude: "labelsTr|\\._"
+# # RSNA 2023 Challenge - Abdominal Trauma Detection
+- path: "/data/groups/public/derived/RSNA-2023-Abdominal-Trauma-Detection/niftis"
+  extension: ".nii.gz"
+# # AbdomenCT-1K
+- path: "/data/groups/public/archive/AbdomenCT-1K"
+  extension: ".nii.gz"
+# TCIA LIDC-IDRI
+- path: "/data/groups/nkiai/radiology_fm/t.veenboer/public-data/LIDC-IDRI-nrrd"
+  extension: ".nrrd"
+# PRIVATE DATASETS
+#
+# INFO-A
+- path: "/data/groups/nkiai/radiology_fm/k.groot.lipman/info_a_niftis"
+  extension: ".nii.gz"
+# # Quality Of Life
+- path: "/data/groups/beets-tan/archive/quality_of_life_ct/nii"
+  extension: ".nii.gz"

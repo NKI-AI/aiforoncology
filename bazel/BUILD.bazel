@@ -1,0 +1,32 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary")
+load("@pip//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["system.bzl"])
+
+AIFO_PACKAGES = [
+    "//aifo/ahcore",
+    "//aifo/aifocore",
+    "//aifo/dlup",
+    "//aifo/fastslide:fastslide_python",
+]
+
+py_binary(
+    name = "ipython",
+    srcs = ["ipython_shell.py"],
+    main = "ipython_shell.py",
+    deps = AIFO_PACKAGES + [
+        requirement("ipython"),
+    ],
+)
+
+py_binary(
+    name = "jupyter",
+    srcs = ["jupyter_cli.py"],
+    main = "jupyter_cli.py",
+    visibility = ["//visibility:public"],
+    deps = AIFO_PACKAGES + [
+        requirement("jupyter"),
+    ],
+)

@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "utils",
+    srcs = [
+        "id_generator.go",
+        "json.go",
+        "logger.go",
+        "metadata_cache.go",
+        "pagination.go",
+        "pagination_generic.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/utils",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/domain",
+        "@com_github_gofiber_fiber_v2//:fiber",
+        "@org_uber_go_zap//:zap",
+    ],
+)

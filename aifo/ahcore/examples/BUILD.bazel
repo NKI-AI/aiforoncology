@@ -1,0 +1,8 @@
+cc_binary(
+    name = "metadata_example",
+    srcs = ["metadata_example.cpp"],
+    deps = [
+        "//aifo/ahcore:data",
+        "@zstd",
+    ],
+)

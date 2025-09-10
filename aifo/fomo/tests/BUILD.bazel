@@ -1,0 +1,63 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+py_test(
+    name = "transforms_test",
+    srcs = ["transforms_test.py"],
+    pytest_main = True,
+    deps = [
+        requirement("pytest"),
+        requirement("torch"),
+        requirement("torchvision"),
+        requirement("kornia"),
+        "//aifo/fomo",
+    ],
+)
+
+py_test(
+    name = "dataset_test",
+    srcs = ["dataset_test.py"],
+    pytest_main = True,
+    deps = [
+        requirement("pytest"),
+        requirement("torch"),
+        requirement("SimpleITK"),
+        requirement("numpy"),
+        requirement("SQLAlchemy"),
+        "//aifo/fomo",
+    ],
+)
+
+py_test(
+    name = "random_resize_gpu_test",
+    srcs = ["random_resize_gpu_test.py"],
+    pytest_main = True,
+    deps = [
+        requirement("pytest"),
+        requirement("torch"),
+        "//aifo/fomo",
+    ],
+)
+
+py_test(
+    name = "vit_test",
+    srcs = ["vit_test.py"],
+    pytest_main = True,
+    deps = [
+        requirement("pytest"),
+        requirement("torch"),
+        "//aifo/fomo",
+        "//third_party/models/dinov2",
+    ],
+)
+
+py_test(
+    name = "masking_test",
+    srcs = ["masking_test.py"],
+    pytest_main = True,
+    deps = [
+        requirement("pytest"),
+        requirement("torch"),
+        "//aifo/fomo",
+    ],
+)

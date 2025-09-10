@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "regions",
+    srcs = ["regions.go"],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/routes/regions",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/handlers",
+        "//aifo/slideinsight/internal/server/services",
+        "@com_github_gofiber_fiber_v2//:fiber",
+    ],
+)

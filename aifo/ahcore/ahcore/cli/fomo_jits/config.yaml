@@ -1,0 +1,78 @@
+models:
+  vit-huge:
+    model_name: "hf-hub:timm/vit_huge_patch14_224_in21k"
+    type: "timm"
+    shift_index: 1
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+  owkin-phikon:
+    model_name: "owkin/phikon"
+    type: "transformer"
+    shift_index: 1
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+  owkin-phikon-v2:
+    model_name: "owkin/phikon-v2"
+    type: "transformer"
+    shift_index: 1
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+  mahmoodlab-uni:
+    model_name: "hf-hub:mahmoodlab/uni"
+    type: "timm"
+    shift_index: 1
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+    timm_kwargs:
+      init_values: !!float 1e-5
+      dynamic_img_size: true
+  mahmoodlab-uni2-h:
+    model_name: "hf-hub:MahmoodLab/UNI2-h"
+    type: "timm"
+    shift_index: 9
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+    timm_kwargs:
+      img_size: 224
+      patch_size: 14
+      depth: 24
+      num_heads: 24
+      init_values: !!float 1e-5
+      embed_dim: 1536
+      mlp_ratio: 5.33334
+      num_classes: 0
+      no_embed_class: true
+      mlp_layer: "SwiGLUPacked"
+      act_layer: "SiLU"
+      reg_tokens: 8
+      dynamic_img_size: true
+  paige-ai-virchow2:
+    model_name: "hf-hub:paige-ai/Virchow2"
+    type: "timm"
+    shift_index: 5
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+    timm_kwargs:
+      mlp_layer: "SwiGLUPacked"
+      act_layer: "SiLU"
+  bioptimus-H-optimus-0:
+    model_name: "hf-hub:bioptimus/H-optimus-0"
+    type: "timm"
+    shift_index: 5
+    input_shape: [224, 224]
+    normalize:
+      mean: [0.707223, 0.578729, 0.703617]
+      std: [0.211883, 0.230117, 0.177517]
+    timm_kwargs: {}

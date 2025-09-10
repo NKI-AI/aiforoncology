@@ -1,8 +1,9 @@
-# Hedron compiled files
+az# Hedron compiled files
 compile_commands.json
 
 # node
-aifo/slidescope/ui/node_modules
+aifo/slideinsight/ui/node_modules
+third_party/libjxl/upstream/libjxl/testdata/
 
 # Compiled files
 *.so
@@ -158,3 +159,4 @@ result
 result-*
 .envrc
 .nix-*
+node_modules

@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "users",
+    srcs = [
+        "adapter.go",
+        "auth.go",
+        "crud.go",
+        "queries.go",
+        "search.go",
+        "tokens.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources/database/sqlite/users",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/errors",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/utils",
+    ],
+)

@@ -1,0 +1,23 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+# C Spectral slide example using FastSlide C wrapper
+cc_binary(
+    name = "spectral_example_c",
+    srcs = ["spectral_example.c"],
+    linkopts = ["-lrt"],  # Real-time library for clock_gettime
+    deps = [
+        "//aifo/fastslide:fastslide_c",
+        "@libvips",
+    ],
+)
+
+# C Spectral resampling example using FastSlide C wrapper with Lanczos algorithms
+cc_binary(
+    name = "spectral_resample_c",
+    srcs = ["spectral_resample.c"],
+    linkopts = ["-lrt"],  # Real-time library for clock_gettime
+    deps = [
+        "//aifo/fastslide:fastslide_c",
+        "@libvips",
+    ],
+)

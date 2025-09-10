@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "auth",
+    srcs = [
+        "cookie.go",
+        "password.go",
+        "password_security.go",
+        "rate_limiter.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/auth",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/ports",
+        "@org_golang_x_crypto//bcrypt",
+    ],
+)

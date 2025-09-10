@@ -1,0 +1,4 @@
+_target_: head_calibration.data.mnist_datamodule.MNISTDataModule
+batch_size: 1024
+num_workers: 0
+data_dir: ${paths.data_dir}

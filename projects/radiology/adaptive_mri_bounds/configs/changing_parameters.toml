@@ -1,0 +1,52 @@
+## AI model performance
+[sensitivity_ai]
+parameter_range = {start=0, end=1, step=100}
+name = "Sensitivity AI"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+
+[specificity_ai]
+parameter_range = {start=0, end=1, step=100}
+name = "Specificity AI"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+
+# Abbreviated protocol radiologists' performance
+[sensitivity_abbr]
+parameter_range = {start=0.6, end=1, step=100}
+name = "Sensitivity Abbreviated Protocol"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+
+[specificity_abbr]
+parameter_range = {start=0.6, end=1, step=100}
+name = "Specificity Abbreviated Protocol"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+
+# Duration of the protocols
+[abbr_time]
+parameter_range = {start=120, end=600, step=100}
+name = "Duration Abbreviated Protocol"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+#
+[full_time]
+parameter_range = {start=500, end=1200, step=100}
+name = "Duration Full Protocol"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+
+
+# Full protocol radiologists' performance
+[sensitivity_full]
+parameter_range = {start=0, end=1, step=2}
+name = "Sensitivity Full Protocol"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}
+
+[specificity_full]
+parameter_range = {start=0, end=1, step=2}
+name = "Specificity Full Protocol"
+time_range = {start=0, end=1}
+recall_range = {start=0, end=0.2}

@@ -1,0 +1,110 @@
+# =============================================================================
+# Common Settings
+# =============================================================================
+build --incompatible_default_to_explicit_init_py
+build --experimental_isolated_extension_usages
+common --@aspect_rules_ts//ts:skipLibCheck=honor_tsconfig
+
+# =============================================================================
+# Build Performance
+# =============================================================================
+build --jobs=auto
+build --experimental_remote_merkle_tree_cache
+build --experimental_remote_cache_compression
+build --experimental_remote_cache_async
+build --experimental_guard_against_concurrent_changes
+build --experimental_reuse_sandbox_directories
+
+# =============================================================================
+# Developer Experience
+# =============================================================================
+build --show_progress_rate_limit=0.5
+build --color=yes
+build --terminal_columns=120
+build --show_timestamps
+build --announce_rc
+build --heap_dump_on_oom
+test  --test_output=all
+
+# =============================================================================
+# C++ Compiler Settings
+# =============================================================================
+build --cxxopt=-std=c++20
+build --host_cxxopt=-std=c++20
+
+# Enable the new platforms/toolchains-based C++ resolution
+build --incompatible_enable_cc_toolchain_resolution
+
+# Default platform: let Bazel pick host platform automatically (no override)
+
+# =============================================================================
+# Release Config (opt + strip)
+# =============================================================================
+build:release --compilation_mode=opt
+build:release --copt=-O3
+build:release --copt=-DNDEBUG
+build:release --strip=always
+
+# Make release the default for build/test/run
+build --config=release
+test  --config=release
+run   --config=release
+
+# =============================================================================
+# CPU Config (native arch + fast-math + LTO)
+# =============================================================================
+build:cpu --config=release
+build:cpu --copt=-ffast-math
+build:cpu --copt=-march=native
+build:cpu --copt=-mtune=native
+build:cpu --linkopt=-flto
+
+# =============================================================================
+# WASM Config (Emscripten-friendly)
+# =============================================================================
+build:wasm --config=release
+build:wasm --copt=-O2
+build:wasm --copt=-fno-fast-math
+build:wasm --copt=-fexceptions
+build:wasm --copt=-Wno-nan-infinity-disabled
+build:wasm --extra_toolchains=@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux
+build:wasm --extra_toolchains=@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_mac
+
+# =============================================================================
+# Debug Config
+# =============================================================================
+build:debug --compilation_mode=dbg
+build:debug --copt=-g3
+build:debug --strip=never
+build:debug --copt=-fno-omit-frame-pointer
+build:debug --copt=-DDEBUG
+build:debug --sandbox_debug
+build:debug --verbose_failures
+build:debug --copt=-O0
+build:debug --copt=-fno-fast-math
+build:debug --copt=-fno-lto
+build:debug --linkopt=-fno-lto
+
+# Development = debug + extras
+build:dev --config=debug
+build:dev --compilation_mode=dbg
+build:dev --strip=never
+
+# =============================================================================
+# Sanitizer Configurations
+# =============================================================================
+build:asan  --strip=never --copt=-fsanitize=address --copt=-DADDRESS_SANITIZER --copt=-O1 --copt=-fno-omit-frame-pointer --linkopt=-fsanitize=address
+build:tsan  --strip=never --copt=-fsanitize=thread  --copt=-DTHREAD_SANITIZER  --copt=-O1 --copt=-fno-omit-frame-pointer --linkopt=-fsanitize=thread
+build:msan  --strip=never --copt=-fsanitize=memory  --copt=-DMEMORY_SANITIZER  --copt=-O1 --copt=-fno-omit-frame-pointer --linkopt=-fsanitize=memory
+build:ubsan --strip=never --copt=-fsanitize=undefined --copt=-DUNDEFINED_BEHAVIOR_SANITIZER --copt=-O1 --copt=-fno-omit-frame-pointer --linkopt=-fsanitize=undefined
+
+# =============================================================================
+# Import Local Settings
+# =============================================================================
+try-import %workspace%/.bazelrc.local
+
+# =============================================================================
+# Java Runtime Settings
+# =============================================================================
+build --java_runtime_version=remotejdk_21
+run   --java_runtime_version=remotejdk_21

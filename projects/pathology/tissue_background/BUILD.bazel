@@ -1,0 +1,36 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary")
+
+genrule(
+    name = "generate_env",
+    srcs = [".env.example"],
+    outs = [".env"],
+    cmd = """
+        if [ ! -f $(location .env) ]; then
+            cp $(location .env.example) $(location .env)
+        fi
+        touch $(location .env)
+    """,
+    message = "Ensuring .env file exists from .env.example if missing.",
+)
+
+py_binary(
+    name = "create_manifest",
+    srcs = ["create_manifest.py"],
+    deps = ["//aifo/ahcore"],
+)
+
+py_binary(
+    name = "train",
+    srcs = ["train.py"],
+    data = [
+        "additional_config",
+        ":generate_env",
+    ],
+    env = {
+        "HYDRA_FULL_ERROR": "1",
+        "OMP_NUM_THREADS": "1",
+    },
+    deps = [
+        "//aifo/ahcore",
+    ],
+)

@@ -1,0 +1,2 @@
+difficult_samples_callback:
+  _target_: head_calibration.callbacks.difficult_samples.DifficultSamplesCallback

@@ -1,0 +1,28 @@
+# @package _global_
+# specify here default inference configuration
+defaults:
+  - _self_ # Means that any variables defined here will be overridden by possible subconfigs below
+  - augmentations: ???
+  - callbacks: inference.yaml
+  - data_description: ???
+  - datamodule: dataset.yaml
+  - lit_module: ???
+  - losses: ???
+  - metrics: ???
+  - paths: default.yaml
+  - pre_transform: ???
+  - task: segmentation.yaml
+  - trainer: default.yaml
+  - hydra: default.yaml # if we want to setup different hydra logging dirs / color log
+  # experiment configs allow for version control of specific configurations
+  # e.g. specific hyperparameter searches or something
+  - experiment: null
+# checkpoint path
+ckpt_path: null
+# task name -- used for output directory path (or name it to a specific experiment if you'd like)
+task_name: "jit_model"
+# tags that can be found in mlflow to keep track of experiments
+# note you cannot append in cli currently (perhaps in future)
+tags: ["dev"]
+# jitted model path
+jitted_model_path: "jitted_model.pt"

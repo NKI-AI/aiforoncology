@@ -1,0 +1,13 @@
+_target_: head_calibration.models.multilabel_classifier_module.MultilabelClassifierLitModule
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.001
+  weight_decay: 0.0
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: ${trainer.max_epochs}
+  eta_min: 1e-5
+num_classes: 10
+compile: false

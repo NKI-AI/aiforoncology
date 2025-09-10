@@ -1,0 +1,754 @@
+@import "tailwindcss";
+@import "ol/ol.css";
+@import url("./styles/notifications.css");
+
+@custom-variant dark (&:is(.dark *));
+
+/* Global styles for the SlideInsight viewer */
+
+/* CSS Variables */
+:root {
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: 210 40% 98%;
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --radius: 0.625rem;
+
+  /* Sidebar variables
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --sidebar-primary: 222.2 47.4% 11.2%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 222.2 84% 4.9%;
+  --sidebar-border: 214.3 31.8% 91.4%;
+  --sidebar-ring: 222.2 84% 4.9%; */
+
+  --chart-1: oklch(0.646 0.222 41.116);
+
+  --chart-2: oklch(0.6 0.118 184.704);
+
+  --chart-3: oklch(0.398 0.07 227.392);
+
+  --chart-4: oklch(0.828 0.189 84.429);
+
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --sidebar: oklch(0.985 0 0);
+
+  --sidebar-foreground: oklch(0.145 0 0);
+
+  --sidebar-primary: oklch(0.205 0 0);
+
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+
+  --sidebar-accent: oklch(0.97 0 0);
+
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+
+  --sidebar-border: oklch(0.922 0 0);
+
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: 210 40% 98%;
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  /* Dark sidebar variables */
+  /* --sidebar-background: 222.2 84% 4.9%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 210 40% 98%;
+  --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+  --sidebar-accent: 217.2 32.6% 17.5%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217.2 32.6% 17.5%;
+  --sidebar-ring: 212.7 26.8% 83.9%; */
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Card shadows */
+.card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Toolbar buttons */
+@layer components {
+  .toolbar-button {
+    @apply p-2 rounded-full text-white/80 hover:text-white hover:bg-indigo-600 focus:outline-none transition duration-150;
+  }
+
+  /* Control cards */
+  .control-card {
+    @apply bg-white rounded-lg overflow-hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: fadeSlideIn 0.2s ease-out forwards;
+  }
+}
+
+/* Animations */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #3949ab;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Make root element fill the viewport */
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+/* Ensure full height for the app */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  /* Improve mobile viewport handling */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  /* Prevent elastic scrolling on iOS and other mobile browsers */
+  overscroll-behavior: none;
+  -webkit-overscroll-behavior: none;
+  /* Fix viewport height issues on mobile browsers */
+  height: 100vh;
+}
+
+/* Add utility classes for shadows */
+.shadow-xs {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Mobile viewport and safe area utilities */
+@layer utilities {
+  /* Safe area support for iOS devices */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Viewer-specific utilities */
+  .viewer-no-scroll {
+    overflow: hidden;
+  }
+
+  /* Anti-elastic scroll utilities */
+  .no-elastic-scroll {
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+  }
+
+  /* Mobile viewer specific fixes */
+  @media screen and (max-width: 768px) {
+    .viewer-no-scroll {
+      overflow: hidden;
+      /* Prevent mobile scrolling and elastic bounce */
+      touch-action: none;
+      -webkit-overflow-scrolling: auto;
+      /* Ensure exact height calculation */
+      height: calc(100dvh - 44px) !important;
+      max-height: calc(100dvh - 44px) !important;
+    }
+
+    /* Ensure main layout doesn't add extra padding that causes scroll issues */
+    .h-screen main[class*="pt-11"] {
+      padding-top: 0 !important;
+    }
+
+    .h-screen .viewer-no-scroll {
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+    }
+  }
+
+  /* Mobile-friendly viewport heights */
+  .h-screen-mobile {
+    height: 100vh;
+    height: 100dvh;
+    /* Dynamic viewport height */
+  }
+
+  .min-h-screen-mobile {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Prevent zoom on inputs on iOS */
+  @media screen and (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="password"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+
+    /* Fix viewport height issues on mobile browsers */
+    html,
+    body {
+      height: 100vh;
+      height: 100dvh;
+      /* Dynamic viewport height for mobile */
+      /* Ensure elastic scrolling is disabled on mobile */
+      overscroll-behavior: none;
+      -webkit-overscroll-behavior: none;
+    }
+
+    /* Fix calc() expressions for mobile viewport - only for the original problematic class */
+    .h-\[calc\(100vh-44px\)\] {
+      height: calc(100dvh - 44px) !important;
+    }
+  }
+}
+
+/* Custom scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fade-in-delayed {
+  animation: fadeIn 0.3s ease-out forwards;
+  animation-delay: calc(0.05s * var(--index, 0));
+}
+
+/* Sidebar collapsible enhancements */
+@layer components {
+  /* Collapsible content animations */
+  [data-state="open"] [data-slot="sidebar-menu-sub"] {
+    animation: collapsibleSlideDown 200ms ease-out;
+  }
+
+  [data-state="closed"] [data-slot="sidebar-menu-sub"] {
+    animation: collapsibleSlideUp 200ms ease-out;
+  }
+
+  /* Chevron rotation */
+  .group\/collapsible [data-state="open"] svg {
+    transform: rotate(90deg);
+  }
+
+  .group\/collapsible [data-state="closed"] svg {
+    transform: rotate(0deg);
+  }
+
+  /* Enhanced hover states for collapsible items */
+  .group\/collapsible [data-slot="sidebar-menu-button"]:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+
+  /* Active state styling for parent items with active children */
+  .group\/collapsible:has([data-active="true"])
+    [data-slot="sidebar-menu-button"] {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+    font-weight: 500;
+  }
+}
+
+@keyframes collapsibleSlideDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapsibleSlideUp {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+/* Ensure proper spacing for container queries */
+@container (min-width: 768px) {
+  .container-md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  :root {
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+  }
+
+  .dark {
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+  }
+}
+
+/* shadcn/ui animation utilities */
+@layer utilities {
+  .animate-in {
+    animation-name: animateIn;
+    animation-duration: 150ms;
+    animation-fill-mode: both;
+  }
+
+  .animate-out {
+    animation-name: animateOut;
+    animation-duration: 150ms;
+    animation-fill-mode: both;
+  }
+
+  .fade-in-0 {
+    animation-name: fadeIn;
+  }
+
+  .fade-out-0 {
+    animation-name: fadeOut;
+  }
+
+  .zoom-in-95 {
+    animation-name: zoomIn95;
+  }
+
+  .zoom-out-95 {
+    animation-name: zoomOut95;
+  }
+
+  .slide-in-from-top-2 {
+    animation-name: slideInFromTop;
+    --slide-distance: 8px;
+  }
+
+  .slide-in-from-bottom-2 {
+    animation-name: slideInFromBottom;
+    --slide-distance: 8px;
+  }
+
+  .slide-in-from-left-2 {
+    animation-name: slideInFromLeft;
+    --slide-distance: 8px;
+  }
+
+  .slide-in-from-right-2 {
+    animation-name: slideInFromRight;
+    --slide-distance: 8px;
+  }
+
+  .slide-out-to-top-2 {
+    animation-name: slideOutToTop;
+    --slide-distance: 8px;
+  }
+
+  .slide-out-to-bottom-2 {
+    animation-name: slideOutToBottom;
+    --slide-distance: 8px;
+  }
+
+  .slide-out-to-left-2 {
+    animation-name: slideOutToLeft;
+    --slide-distance: 8px;
+  }
+
+  .slide-out-to-right-2 {
+    animation-name: slideOutToRight;
+    --slide-distance: 8px;
+  }
+}
+
+/* shadcn/ui keyframes */
+@keyframes animateIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes animateOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes zoomIn95 {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut95 {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(calc(-1 * var(--slide-distance, 8px)));
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(var(--slide-distance, 8px));
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(calc(-1 * var(--slide-distance, 8px)));
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(var(--slide-distance, 8px));
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToTop {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(calc(-1 * var(--slide-distance, 8px)));
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(var(--slide-distance, 8px));
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-1 * var(--slide-distance, 8px)));
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(var(--slide-distance, 8px));
+  }
+}
+
+/* @uiw/react-color dark mode support */
+[data-color-mode*="dark"] .w-color-sketch {
+  --sketch-background: hsl(var(--color-popover)) !important;
+}
+
+[data-color-mode*="dark"] .w-color-swatch {
+  --sketch-swatch-border-top: 1px solid hsl(var(--color-border)) !important;
+}
+
+[data-color-mode*="dark"] .w-color-block {
+  --block-background-color: hsl(var(--color-popover)) !important;
+  --block-box-shadow: rgb(0 0 0 / 10%) 0 1px !important;
+}
+
+[data-color-mode*="dark"] .w-color-editable-input {
+  --editable-input-label-color: hsl(var(--muted-foreground)) !important;
+  --editable-input-box-shadow: hsl(var(--color-input)) 0px 0px 0px 1px inset !important;
+  --editable-input-color: hsl(var(--color-popover-foreground)) !important;
+}
+
+[data-color-mode*="dark"] .w-color-github {
+  --github-border: 1px solid hsl(var(--color-border)) !important;
+  --github-background-color: hsl(var(--color-popover)) !important;
+  --github-box-shadow: rgb(0 0 0 / 15%) 0px 3px 12px !important;
+  --github-arrow-border-color: hsl(var(--color-border)) !important;
+}
+
+[data-color-mode*="dark"] .w-color-compact {
+  --compact-background-color: hsl(var(--color-popover)) !important;
+}
+
+[data-color-mode*="dark"] .w-color-material {
+  --material-background-color: hsl(var(--color-popover)) !important;
+  --material-border-bottom-color: hsl(var(--color-border)) !important;
+}
+
+[data-color-mode*="dark"] .w-color-alpha {
+  --alpha-pointer-background-color: hsl(var(--muted)) !important;
+  --alpha-pointer-box-shadow: rgb(0 0 0 / 37%) 0px 1px 4px 0px !important;
+}
+
+/* Make color picker more compact */
+.w-color-block {
+  --block-color-size: 18px !important;
+  --block-color-margin: 2px !important;
+}
+
+/* Fix Block color picker arrow/pointer direction */
+.w-color-block div[style*="border-top"],
+.w-color-block div[style*="border-bottom"] {
+  transform: scaleY(-1) !important;
+}
+
+/* Target triangle/arrow elements more broadly */
+.w-color-block div[style*="triangle"],
+.w-color-block div[style*="arrow"],
+.w-color-block div[style*="pointer"] {
+  transform: scaleY(-1) !important;
+}
+
+/* Target elements with border styles that form triangles */
+.w-color-block div[style*="border-left"][style*="transparent"],
+.w-color-block div[style*="border-right"][style*="transparent"] {
+  transform: scaleY(-1) !important;
+}
+
+.w-color-sketch {
+  --sketch-width: 200px !important;
+}

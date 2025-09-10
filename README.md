@@ -65,6 +65,7 @@ A huge thank you to our dedicated contributors and collaborators for their inval
 - [**Jonas Teuwen**](https://github.com/jonasteuwen)
 - [**Vivien van Veldhuizen**](https://github.com/VivienvV)
 - [**Tim Veenboer**](https://github.com/TimVeenboer)
+- [**George Yiasemis**](https://github.com/georgeyiasemis)
 
 Interested in contributing? Feel free to explore, fork the repository, and submit pull requests!  
 For major contributions, please get in touch with us via our [**lab website**](https://aiforoncology.nl/).

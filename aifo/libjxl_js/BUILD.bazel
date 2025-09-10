@@ -1,0 +1,101 @@
+load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+# Platform-aware version of libjxl that works with both native and WASM targets
+cc_library(
+    name = "libjxl_wasm",
+    copts = [
+        "-DNDEBUG",
+        "-Wno-unused-parameter",
+        "-Wno-nan-infinity-disabled",  # Allow infinity/NaN usage
+        # WASM-specific flags will be added automatically via platform mappings
+        # Native-specific flags will also be added automatically
+    ],
+    defines = [
+        "JXL_STATIC_DEFINE",
+        "JXL_THREADS_STATIC_DEFINE",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:wasm32",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/libjxl",
+        "//third_party/libjxl:libjxl_threads",
+    ],
+)
+
+# Native version of the same library for native builds
+cc_library(
+    name = "libjxl_native",
+    copts = [
+        "-DNDEBUG",
+        "-Wno-unused-parameter",
+        # Native-specific flags will be added automatically via platform mappings
+    ],
+    defines = [
+        "JXL_STATIC_DEFINE",
+        "JXL_THREADS_STATIC_DEFINE",
+    ],
+    target_compatible_with = select({
+        "@platforms//os:linux": ["@platforms//cpu:x86_64"],
+        "@platforms//os:macos": ["@platforms//cpu:aarch64"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/libjxl",
+        "//third_party/libjxl:libjxl_threads",
+    ],
+)
+
+# WASM version of libjxl multiplex encoder/decoder
+cc_binary(
+    name = "libjxl_multiplex",
+    srcs = [
+        "libjxl_wrapper.cpp",
+    ],
+    copts = [
+        "-std=c++20",
+        "-Wno-unused-parameter",
+        "-Wno-nan-infinity-disabled",  # Allow infinity/NaN usage
+        # WASM-specific optimization flags will be added via platform mappings
+    ],
+    linkopts = [
+        # Emscripten-specific link options
+        "-sWASM=1",
+        "-sEXPORT_ES6=1",
+        "-sMODULARIZE=1",
+        "-sENVIRONMENT=web,node",
+        "-sEXPORTED_FUNCTIONS=[_malloc,_free,_decode_jxl_multiplex,_decode_jxl_rgba,_get_compressed_data,_get_compressed_size,_get_decoded_data,_get_decoded_size,_get_decoded_rgba_data,_get_decoded_rgba_size,_get_rgba_bits_per_sample]",
+        "-sEXPORTED_RUNTIME_METHODS=[ccall,cwrap,writeArrayToMemory,HEAPU8,HEAPU16,HEAP8,HEAP16,HEAP32]",
+        "-sNO_EXIT_RUNTIME=1",
+        "-sALLOW_MEMORY_GROWTH=1",
+        "-sINITIAL_MEMORY=134217728",  # 128MB initial memory
+        "-sMAXIMUM_MEMORY=536870912",  # 512MB maximum memory
+        "-sFORCE_FILESYSTEM=1",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:wasm32",
+    ],
+    deps = [":libjxl_wasm"],
+)
+
+wasm_cc_binary(
+    name = "libjxl_multiplex_wasm",
+    cc_target = ":libjxl_multiplex",
+    visibility = ["//visibility:public"],
+)
+
+# Convenient aliases for building with different platforms
+alias(
+    name = "wasm",
+    actual = ":libjxl_multiplex_wasm",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "native",
+    actual = ":libjxl_native",
+    visibility = ["//visibility:public"],
+)

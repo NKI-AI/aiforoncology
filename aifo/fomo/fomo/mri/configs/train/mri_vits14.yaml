@@ -1,0 +1,59 @@
+custom_pretrained_path: "/processing/e.marcus/mri_fomo_ckpts/dinov2_pretrained/dinov2_vits14_reg4_pretrain.pth"
+dino:
+  head_n_prototypes: 131072
+  head_bottleneck_dim: 384
+  koleo_loss_weight: 0.1
+ibot:
+  separate_head: false
+  head_n_prototypes: 131072
+  mask_ratio_min_max:
+    - 0.1
+    - 0.5
+train:
+  batch_size_per_gpu: 256
+  num_workers: 15
+  dataset_path: ""
+  centering: centering
+  output_dir: .
+  OFFICIAL_EPOCH_LENGTH: 1250 # in batches
+custom_dataset:
+  name: MRIVectorDataset
+  vector_name: "mri_vector"
+  chunk_size_mb: 5
+  queue_size_gb: 250
+student:
+  arch: vit_small
+  patch_size: 14
+  drop_path_rate: 0.4
+  ffn_layer: mlp
+  num_register_tokens: 4
+  interpolate_antialias: true # antialiasing for pos embed interpolation
+  block_chunks: 0
+teacher:
+  momentum_teacher: 0.994
+  final_momentum_teacher: 1
+  warmup_teacher_temp: 0.04
+  teacher_temp: 0.07
+  warmup_teacher_temp_epochs: 30
+optim:
+  epochs: 200
+  weight_decay_end: 0.2
+  base_lr: 2.0e-04 # learning rate for a batch size of 1024
+  warmup_epochs: 20
+  layerwise_decay: 1.0
+  scaling_rule: sqrt_wrt_1024 # note that it will scale the lr based on the batch size automatically!
+  min_lr: 1.0e-05
+  adamw_beta1: 0.9
+  adamw_beta2: 0.999
+crops:
+  global_crops_scale:
+    - 0.32
+    - 1.0
+  global_crops_size: 224
+  local_crops_size: 98
+  local_crops_scale:
+    - 0.05
+    - 0.32
+
+# evaluation:
+#   eval_period_iterations: 12500

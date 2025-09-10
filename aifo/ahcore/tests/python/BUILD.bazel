@@ -1,0 +1,34 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+REQUIREMENTS = [
+    "//aifo/ahcore",
+    requirement("pytest"),
+]
+
+py_test(
+    name = "h5_writer_test",
+    srcs = [
+        "h5_writer_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "models_test",
+    srcs = [
+        "models_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "readers_test",
+    srcs = [
+        "readers_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)

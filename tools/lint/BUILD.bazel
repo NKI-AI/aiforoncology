@@ -1,0 +1,21 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_deb", "pkg_tar")
+
+alias(
+    name = "options",
+    actual = "@aspect_rules_lint//lint:options",
+)
+
+filegroup(
+    name = "clang_tidy",
+    srcs = ["@llvm_toolchain//:clang-tidy"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "clang_tidy_tar",
+    srcs = [":clang_tidy"],
+    extension = "tar.gz",
+    package_dir = "",
+    strip_prefix = "",
+)

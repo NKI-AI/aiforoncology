@@ -1,0 +1,87 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+exports_files(glob(["pyvips/*.py"]))
+
+PYVIPS_FILES = [
+    "@pyvips//:pyvips/__init__.py",
+    "@pyvips//:pyvips/base.py",
+    "@pyvips//:pyvips/enums.py",
+    "@pyvips//:pyvips/error.py",
+    "@pyvips//:pyvips/gobject.py",
+    "@pyvips//:pyvips/gvalue.py",
+    "@pyvips//:pyvips/vconnection.py",
+    "@pyvips//:pyvips/vdecls.py",
+    "@pyvips//:pyvips/version.py",
+    "@pyvips//:pyvips/vimage.py",
+    "@pyvips//:pyvips/vinterpolate.py",
+    "@pyvips//:pyvips/vobject.py",
+    "@pyvips//:pyvips/voperation.py",
+    "@pyvips//:pyvips/vregion.py",
+    "@pyvips//:pyvips/vsource.py",
+    "@pyvips//:pyvips/vsourcecustom.py",
+    "@pyvips//:pyvips/vtarget.py",
+    "@pyvips//:pyvips/vtargetcustom.py",
+]
+
+py_binary(
+    name = "pyvips_build",
+    srcs = [
+        "@pyvips//:pyvips/pyvips_build.py",
+        "@pyvips//:pyvips/vdecls.py",
+    ],
+    imports = [
+        ".",
+        "_main~_repo_rules~pyvips/pyvips",
+        "pyvips",
+    ],
+    main = "pyvips_build.py",
+    deps = [
+        "@pip//cffi",
+        "@pip//pycparser",
+    ],
+)
+
+genrule(
+    name = "generate_libvips_c",
+    srcs = [
+        "@pyvips//:pyvips/pyvips_build.py",
+        "@pyvips//:pyvips/vdecls.py",
+    ],
+    outs = ["_libvips_manual.c"],
+    cmd = "$(location :pyvips_build) $@",
+    tools = [":pyvips_build"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "libvips_wrapper-impl",
+    srcs = [":generate_libvips_c"],
+    linkshared = True,
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@libvips",
+        "@openslide",
+        "@rules_python//python/cc:current_py_cc_headers",
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
+)
+
+genrule(
+    name = "libvips_wrapper",
+    srcs = [":libvips_wrapper-impl"],
+    outs = ["pyvips/_libvips.so"],
+    cmd = "cp $(location :libvips_wrapper-impl) $@",
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "pyvips",
+    srcs = PYVIPS_FILES,
+    data = [
+        ":libvips_wrapper",
+    ],
+    visibility = ["//visibility:public"],
+)

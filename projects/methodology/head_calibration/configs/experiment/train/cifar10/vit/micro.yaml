@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /data: cifar
+  - override /model: vit/micro
+tags: ["cifar10", "vit"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+model:
+  net:
+    num_channels: 3
+    img_dim: 32
+data:
+  batch_size: 512
+experiment_name: "train-cifar10_vit"
+run_label: "micro"

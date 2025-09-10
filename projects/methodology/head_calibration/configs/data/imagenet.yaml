@@ -1,0 +1,5 @@
+_target_: head_calibration.data.imagenet_datamodule.ImagenetDataModule
+batch_size: 1024
+num_workers: 0
+data_dir: ${oc.env:DATA_DIR}
+finetune: ${finetune}

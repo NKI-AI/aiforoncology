@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /data: mnist
+  - override /model: pit/tiny
+tags: ["mnist", "pit"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+model:
+  net:
+    num_channels: 1
+    img_dim: 28
+data:
+  batch_size: 256
+experiment_name: "train-mnist_pit"
+run_label: "tiny"

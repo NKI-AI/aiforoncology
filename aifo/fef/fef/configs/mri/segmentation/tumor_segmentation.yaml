@@ -1,0 +1,217 @@
+trainer:
+  class_path: eva.Trainer
+  init_args:
+    accelerator: gpu
+    devices: 1 # multi-gpu training is not officially supported
+    n_runs: &N_RUNS ${oc.env:N_RUNS, 1}
+    default_root_dir: &OUTPUT_ROOT ${oc.env:OUTPUT_ROOT, /projects/mri_fomo/eva/logs/${oc.env:MODEL_NAME, vit_small_patch14_224_dino}/segmentation/${oc.env:DATASET_NAME, mama-mia_30}_volume_dice}
+    max_epochs: &MAX_EPOCHS ${oc.env:MAX_EPOCHS, 1}
+    callbacks:
+      - class_path: eva.callbacks.ConfigurationLogger
+      - class_path: eva.vision.callbacks.SemanticSegmentationLogger
+        init_args:
+          log_every_n_epochs: 1
+          log_images: false
+          mean: [0.1008]
+          std: [0.193391]
+      - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+        init_args:
+          filename: best
+          save_last: true
+          save_top_k: 1
+          monitor: &MONITOR_METRIC ${oc.env:MONITOR_METRIC, val/GeneralizedDiceScore_tumor}
+          mode: &MONITOR_METRIC_MODE ${oc.env:MONITOR_METRIC_MODE, max}
+      - class_path: lightning.pytorch.callbacks.EarlyStopping
+        init_args:
+          min_delta: 0
+          patience: 100
+          monitor: ${oc.env:MONITOR_METRIC, val/GeneralizedDiceScore_tumor}
+          mode: ${oc.env:MONITOR_METRIC_MODE, max}
+      - class_path: eva.callbacks.SegmentationEmbeddingsWriter
+        init_args:
+          output_dir: &DATASET_EMBEDDINGS_ROOT ${oc.env:EMBEDDINGS_ROOT, /projects/mri_fomo/eva/embeddings}/${oc.env:MODEL_NAME, vit_small_patch14_224}/segmentation/${oc.env:DATASET_NAME, mama-mia_30}
+          dataloader_idx_map:
+            0: train
+            1: val
+            2: test
+          metadata_keys: ["sample_index", "slice_index", "patient_id"]
+          overwrite: True
+          backbone:
+            class_path: fef.models.networks.backbones.mri_dinov2.DINOv2VIT
+            init_args:
+              checkpoint_path: /projects/mri_fomo/training_outputs/${oc.env:CHECKPOINT_PATH, mri_vits14_no_pretrain_v3/eval/training_249999}/teacher_checkpoint.pth
+              timm_ckpt: /projects/mri_fomo/eva/timm_checkpoints/${oc.env:CHECKPOINT_PATH, mri_vits14_no_pretrain_v3/eval/training_249999}/teacher_checkpoint.pth
+              model_name: mri_vit_base_patch14_224
+              out_indices: null
+              output_tokens: "patch"
+              model_kwargs:
+                embed_dim: 384
+                dynamic_img_size: true
+    logger:
+      - class_path: lightning.pytorch.loggers.TensorBoardLogger
+        init_args:
+          save_dir: *OUTPUT_ROOT
+          name: ""
+model:
+  class_path: fef.models.modules.semantic_segmentation.SemanticSegmentation2dModule
+  init_args:
+    decoder:
+      class_path: eva.vision.models.networks.decoders.segmentation.ConvDecoder1x1
+      init_args:
+        in_features: 384
+        num_classes: &NUM_CLASSES 2
+    criterion:
+      class_path: eva.vision.losses.DiceCELoss
+      init_args:
+        include_background: ${oc.env:INCLUDE_BACKGROUND, true}
+        softmax: false
+        batch: true
+        weight: [0.2, 0.8] # Background: 0.2, Tumor: 0.8
+        lambda_dice: 1.0
+        lambda_ce: 1.0
+        reduction: "mean"
+        smooth_nr: 1e-5
+        smooth_dr: 1e-5
+    optimizer:
+      class_path: torch.optim.AdamW
+      init_args:
+        lr: ${oc.env:LR_VALUE, 0.0001}
+        weight_decay: 0.01
+    lr_scheduler:
+      class_path: torch.optim.lr_scheduler.CyclicLR
+      init_args:
+        base_lr: 0.00001
+        max_lr: 0.0001
+        step_size_up: 35000
+        cycle_momentum: false
+        mode: 'triangular2'
+    postprocess:
+      predictions_transforms:
+        - class_path: torch.argmax
+          init_args:
+            dim: 1
+      targets_transforms: null
+    metrics:
+      common:
+        - class_path: eva.metrics.AverageLoss
+      evaluation:
+        - class_path: eva.vision.metrics.defaults.segmentation.multiclass.MulticlassSegmentationMetrics
+          init_args:
+            num_classes: *NUM_CLASSES
+        - class_path: torchmetrics.MetricCollection
+          init_args:
+            metrics:
+              GeneralizedDiceWrapper:
+                class_path: torchmetrics.ClasswiseWrapper
+                init_args:
+                  metric:
+                    class_path: eva.vision.metrics.GeneralizedDiceScore
+                    init_args:
+                      num_classes: *NUM_CLASSES
+                      weight_type: linear
+                      per_class: true
+                      include_background: ${oc.env:INCLUDE_BACKGROUND, true}
+                  prefix: GeneralizedDiceScore_
+                  labels:
+                    - background
+                    - tumor
+              MonaiDiceWrapper:
+                class_path: torchmetrics.ClasswiseWrapper
+                init_args:
+                  metric:
+                    class_path: eva.vision.metrics.MonaiDiceScore
+                    init_args:
+                      include_background: ${oc.env:INCLUDE_BACKGROUND, true}
+                      num_classes: *NUM_CLASSES
+                      input_format: index
+                      reduction: none
+                  prefix: MonaiDiceScore_
+                  labels:
+                    - background
+                    - tumor
+        - class_path: fef.metrics.volume_dice.VolumeDiceMetric
+          init_args:
+            num_classes: *NUM_CLASSES
+            include_background: ${oc.env:INCLUDE_BACKGROUND, true}
+data:
+  class_path: eva.DataModule
+  init_args:
+    datasets:
+      train:
+        class_path: fef.datasets.embeddings.mri_segmentation_embedding.MRIEmbeddingsSegmentationDataset
+        init_args: &DATASET_ARGS
+          root: *DATASET_EMBEDDINGS_ROOT
+          manifest_file: manifest.csv
+          split: train
+          column_mapping:
+            path: "embeddings"
+            target: "target"
+            split: "split"
+            sample_index: "sample_index"
+            slice_index: "slice_index"
+            patient_id: "patient_id"
+      val:
+        class_path: fef.datasets.embeddings.mri_segmentation_embedding.MRIEmbeddingsSegmentationDataset
+        init_args:
+          !!merge <<: *DATASET_ARGS
+          split: val
+      test:
+        class_path: fef.datasets.embeddings.mri_segmentation_embedding.MRIEmbeddingsSegmentationDataset
+        init_args:
+          !!merge <<: *DATASET_ARGS
+          split: test
+      predict:
+        - class_path: fef.datasets.segmentation.mri.mri_seg_single_dataset.MRITumorSegDataset
+          init_args: &PREDICT_DATASET_ARGS
+            label_file: ${oc.env:LABEL_FILE, /data/groups/public/archive/MAMA-MIA/manifests/manifest_duke.csv}
+            split_ratios: ${oc.env:SPLIT_RATIOS, [0.7, 0.15, 0.15]}
+            orientation: 'LPS'
+            orientation_plane: 'axial'
+            contrast_type: 'post'
+            crop_percentile: ${oc.env:CROP_PERCENTILE, 80}
+            tumor_ratio: ${oc.env:TUMOR_RATIO, 1.0}
+            split: train
+            visualize_preprocessing: ${oc.env:VISUALIZE, False}
+            # Joint transforms for both image and segmentation
+            transforms:
+              class_path: torchvision.transforms.v2.Compose
+              init_args:
+                transforms:
+                  - class_path: fef.transforms.cropping.PatchDivisiblePadder
+                    init_args:
+                      patch_size: ${oc.env:PATCH_SIZE, 14}
+            # Image-only transforms
+            image_transforms:
+              class_path: torchvision.transforms.v2.Compose
+              init_args:
+                transforms:
+                  - class_path: fef.transforms.transforms.PercentileClipper
+                    init_args:
+                      percentile: 99.9
+                  - class_path: fef.transforms.transforms.MinMaxNormalizer
+                  - class_path: torchvision.transforms.v2.Normalize
+                    init_args:
+                      mean: [0.1008]
+                      std: [0.193391]
+        - class_path: fef.datasets.segmentation.mri.mri_seg_single_dataset.MRITumorSegDataset
+          init_args:
+            !!merge <<: *PREDICT_DATASET_ARGS
+            split: val
+        - class_path: fef.datasets.segmentation.mri.mri_seg_single_dataset.MRITumorSegDataset
+          init_args:
+            !!merge <<: *PREDICT_DATASET_ARGS
+            split: test
+    dataloaders:
+      train:
+        batch_size: &BATCH_SIZE ${oc.env:BATCH_SIZE, 1}
+        shuffle: true
+        num_workers: 4
+      val:
+        batch_size: *BATCH_SIZE
+        num_workers: 4
+      test:
+        batch_size: *BATCH_SIZE
+        num_workers: 4
+      predict:
+        batch_size: 1
+        num_workers: 1

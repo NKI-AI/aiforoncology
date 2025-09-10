@@ -1,0 +1,296 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+cc_library(
+    name = "tiff_utilities",
+    srcs = [
+        "src/utilities/tiff/directory_processor.cpp",
+        "src/utilities/tiff/tiff_file.cpp",
+        "src/utilities/tiff/tiff_pool.cpp",
+    ],
+    hdrs = [
+        "include/fastslide/utilities/scoped_timer.h",
+        "include/fastslide/utilities/tiff/directory_processor.h",
+        "include/fastslide/utilities/tiff/tiff_file.h",
+        "include/fastslide/utilities/tiff/tiff_pool.h",
+    ],
+    includes = ["include"],
+    visibility = [
+        "//aifo/fastslide/tests:__pkg__",
+        "//aifo/fastslide/tests:__subpackages__",
+        "//visibility:__subpackages__",
+    ],
+    deps = [
+        ":cache",
+        ":image",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:utilities",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@libtiff",
+    ],
+)
+
+cc_library(
+    name = "colors",
+    srcs = ["src/utilities/colors.cpp"],
+    hdrs = ["include/fastslide/utilities/colors.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "cache",
+    srcs = ["src/utilities/cache.cpp"],
+    hdrs = ["include/fastslide/utilities/cache.h"],
+    includes = ["include"],
+    visibility = [
+        "//aifo/fastslide/tests:__pkg__",
+        "//aifo/fastslide/tests:__subpackages__",
+        "//visibility:__subpackages__",
+    ],
+    deps = [
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:status",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "resample",
+    srcs = [],
+    hdrs = [
+        "include/fastslide/resample/average.h",
+        "include/fastslide/resample/lanczos.h",
+        "include/fastslide/resample/utilities.h",
+    ],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":image",
+    ],
+)
+
+cc_library(
+    name = "image",
+    srcs = ["src/image.cpp"],
+    hdrs = ["include/fastslide/image.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/aifocore:concepts",
+    ],
+)
+
+cc_library(
+    name = "histogram",
+    srcs = ["src/histogram.cpp"],
+    hdrs = ["include/fastslide/histogram.h"],
+    includes = ["include"],
+    visibility = ["//visibility:__subpackages__"],
+    deps = [
+        ":image",
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:utilities",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "tile_cache_manager",
+    srcs = ["src/utilities/tile_cache_manager.cpp"],
+    hdrs = ["include/fastslide/utilities/tile_cache_manager.h"],
+    includes = ["include"],
+    visibility = ["//visibility:__subpackages__"],
+    deps = [
+        ":cache",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "slide_reader",
+    srcs = ["src/slide_reader.cpp"],
+    hdrs = ["include/fastslide/slide_reader.h"],
+    includes = ["include"],
+    visibility = [
+        "//aifo/fastslide/tests:__pkg__",
+        "//aifo/fastslide/tests:__subpackages__",
+        "//visibility:__subpackages__",
+    ],
+    deps = [
+        ":cache",
+        ":colors",
+        ":histogram",
+        ":image",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:utilities",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "tiff_based_reader",
+    srcs = ["src/readers/tiff_based_reader.cpp"],
+    hdrs = ["include/fastslide/readers/tiff_based_reader.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":colors",
+        ":slide_reader",
+        ":tiff_utilities",
+        ":tile_cache_manager",
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:utilities",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@libtiff",
+    ],
+)
+
+# QpTiff reader library
+cc_library(
+    name = "qptiff_reader",
+    srcs = [
+        "src/readers/qptiff.cpp",
+        "src/utilities/combine.cpp",
+    ],
+    hdrs = [
+        "include/fastslide/readers/qptiff.h",
+        "include/fastslide/utilities/combine.h",
+    ],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":colors",
+        ":tiff_based_reader",
+        ":tiff_utilities",
+        "//aifo/aifocore:concepts",
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:utilities",
+        "//third_party/pugixml",
+        "@libtiff",
+    ],
+)
+
+# SVS reader library
+cc_library(
+    name = "svs_reader",
+    srcs = ["src/readers/svs.cpp"],
+    hdrs = ["include/fastslide/readers/svs.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":colors",
+        ":tiff_based_reader",
+        ":tiff_utilities",
+        "//aifo/aifocore:status",
+        "@libtiff",
+    ],
+)
+
+cc_library(
+    name = "readers",
+    srcs = ["src/readers/readers.cpp"],
+    hdrs = ["include/fastslide/readers/readers.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":colors",
+        ":qptiff_reader",
+        ":slide_reader",
+        ":svs_reader",
+        "//aifo/aifocore:concepts",
+    ],
+)
+
+cc_library(
+    name = "fastslide_lib",
+    hdrs = ["include/fastslide/fastslide.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":cache",
+        ":colors",
+        ":readers",
+        ":slide_reader",
+        ":tiff_utilities",
+    ],
+)
+
+# C language bindings
+cc_library(
+    name = "fastslide_c",
+    srcs = glob(["src/c/**/*.cpp"]),
+    hdrs = glob(["include/fastslide/c/**/*.h"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":colors",
+        ":histogram",
+        ":qptiff_reader",  # Added for combine.cpp utilities
+        ":readers",
+        ":resample",
+        ":slide_reader",
+        "//aifo/aifocore:status",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "fastslide_python_cc_lib",
+    srcs = [
+        "src/python/cache.cpp",
+        "src/python/reader.cpp",
+    ],
+    hdrs = [
+        "include/fastslide/python/cache.h",
+        "include/fastslide/python/reader.h",
+    ],
+    includes = ["include"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":cache",
+        ":colors",
+        ":readers",
+        ":slide_reader",
+        "@pybind11",
+    ],
+)
+
+pybind_extension(
+    name = "fastslide/_fastslide",
+    srcs = ["src/python/fastslide.cpp"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__fastslide"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":cache",
+        ":fastslide_python_cc_lib",
+        ":readers",
+        "@pybind11",
+    ],
+)
+
+py_library(
+    name = "fastslide_python",
+    srcs = glob(["fastslide/**/*.py"]),
+    data = [
+        ":fastslide/_fastslide",
+    ],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)

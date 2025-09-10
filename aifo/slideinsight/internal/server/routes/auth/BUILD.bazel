@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "auth",
+    srcs = [
+        "auth.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/routes/auth",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/config",
+        "//aifo/slideinsight/internal/server/handlers",
+        "//aifo/slideinsight/internal/server/middleware",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/server/ratelimit",
+        "//aifo/slideinsight/internal/server/services",
+        "//aifo/slideinsight/internal/server/services/auth",
+        "@com_github_gofiber_fiber_v2//:fiber",
+    ],
+)

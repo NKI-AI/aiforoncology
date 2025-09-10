@@ -1,0 +1,3 @@
+packages:
+  - '.'
+  - 'aifo/slideinsight/ui'

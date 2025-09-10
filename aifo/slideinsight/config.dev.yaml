@@ -1,0 +1,39 @@
+# SlideInsight development configuration
+# Server configuration
+server:
+  port: "3000"
+  host: "0.0.0.0"
+  environment: "development"
+  # CORS configuration
+  cors:
+    enabled: false
+# Database configuration
+database:
+  url: "sqlite:///slideinsight_dev.db"
+# Authentication configuration
+auth:
+  jwt_secret: "dev-secret-key-for-development"
+  jwt_algorithm: "HS256"
+  jwt_expiration_minutes: 5 # 5 minutes for the JWT token
+  jwt_refresh_expiration_minutes: 30 # 30 minutes for the refresh token
+  cookie:
+    name: "_auth"
+    path: "/"
+    http_only: true
+    secure: false
+    same_site: "lax"
+# Email configuration - console provider for development
+email:
+  provider: "console" # Use console for development
+  ses:
+    region: "us-east-1"
+    from_address: "dev@example.com"
+    from_name: "SlideInsight Dev"
+# Storage configuration
+storage:
+  slidesDir: "./slides"
+  masksDir: "./masks"
+  cacheSize: 100
+# Logging configuration
+logging:
+  level: "debug" # More verbose logging in development 

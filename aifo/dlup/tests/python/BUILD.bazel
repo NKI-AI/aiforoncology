@@ -1,0 +1,152 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+REQUIREMENTS = [
+    requirement("pytest"),
+    requirement("pytest-mock"),
+    requirement("psutil"),
+    requirement("pydantic"),
+    requirement("pyhaloxml"),
+    "//aifo/dlup",
+]
+
+# TODO: Consider sharding of individual tests in test files to run asynchronously
+py_test(
+    name = "writers_test",
+    srcs = [
+        "writers_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "tiling_test",
+    srcs = [
+        "tiling_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "slide_annotations_test",
+    srcs = [
+        "slide_annotations_test.py",
+    ],
+    data = [
+        "files/.v7/metadata.json",
+        "files/103S.json",
+        "files/halo_holes.annotations",
+        "files/qupath05.geojson",
+        "files/raster.json",
+        "files/slidescore_annotation_test.txt",
+        "files/test_different_types_halo.annotations",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "logging_test",
+    srcs = [
+        "logging_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "image_test",
+    srcs = [
+        "image_test.py",
+    ],
+    data = [
+        "common.py",
+        "conftest.py",
+        "openslide_backend_test.py",
+    ],
+    imports = ["."],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "geometry_test",
+    srcs = [
+        "geometry_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "dataset_test",
+    srcs = [
+        "common.py",
+        "conftest.py",
+        "dataset_test.py",
+        "image_test.py",
+        "openslide_backend_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "background_test",
+    srcs = [
+        "background_test.py",
+        "common.py",
+        "conftest.py",
+    ],
+    data = [
+        "files/.v7/metadata.json",
+        "files/103S.json",
+        "files/halo_holes.annotations",
+        "files/qupath05.geojson",
+        "files/raster.json",
+        "files/test_different_types_halo.annotations",
+    ],
+    imports = ["."],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "backends_test",
+    srcs = [
+        "backends_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "common_test",
+    srcs = [
+        "common_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "openslide_backend_test",
+    srcs = [
+        "common.py",
+        "conftest.py",
+        "openslide_backend_test.py",
+    ],
+    data = [
+        "files/.v7/metadata.json",
+        "files/103S.json",
+        "files/halo_holes.annotations",
+        "files/qupath05.geojson",
+        "files/raster.json",
+        "files/test_different_types_halo.annotations",
+    ],
+    imports = ["."],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)

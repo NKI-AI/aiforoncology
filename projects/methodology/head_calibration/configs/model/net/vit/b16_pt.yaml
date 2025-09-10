@@ -1,0 +1,10 @@
+_target_: head_calibration.models.components.torchvision_vit.VisionTransformer
+img_dim: 32
+patch_size: 16
+num_layers: 12
+num_heads: 12
+hidden_dim: 768
+mlp_dim: 3072
+num_classes: 10
+num_channels: 3
+pretrained: true

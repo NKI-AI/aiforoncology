@@ -1,0 +1,11 @@
+_target_: head_calibration.data.color_polygon_datamodule.ColorPolygonDataModule
+batch_size: 128
+num_workers: 0
+dataset:
+  _target_: head_calibration.data.components.color_polygon_dataset.ColorPolygonDataset
+  _partial_: true
+  output_shape: [128, 128]
+  polygon_pts: 5
+  bg_noise_scale: 0.1
+  fg_noise_scale: 0.05
+  blur_sigma: 0.3

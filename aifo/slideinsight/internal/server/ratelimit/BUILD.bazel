@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ratelimit",
+    srcs = [
+        "middleware.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/ratelimit",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/auth",
+        "//aifo/slideinsight/internal/server/middleware",
+        "//aifo/slideinsight/internal/server/services",
+        "//aifo/slideinsight/internal/server/services/auth",
+        "@com_github_gofiber_fiber_v2//:fiber",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)

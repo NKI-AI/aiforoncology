@@ -1,0 +1,21 @@
+load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "copy_to_bin")
+
+filegroup(
+    name = "libjxl_assets",
+    srcs = glob([
+        "*.js",
+        "*.wasm",
+        "*.html",
+        "*.data",
+        "*.symbols",
+        "*.mem",
+        "*.map",
+    ]),
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+)
+
+copy_to_bin(
+    name = "libjxl_bin",
+    srcs = [":libjxl_assets"],
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+)

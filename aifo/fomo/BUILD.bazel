@@ -1,0 +1,175 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+
+filegroup(
+    name = "ct_dinov2_configs",
+    srcs = glob(["fomo/ct/configs/train/**/*.yaml"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "mri_dinov2_configs",
+    srcs = glob(["fomo/mri/configs/train/*.yaml"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "ct_dataset_configs",
+    srcs = glob(["fomo/ct/configs/dataset/*.yaml"]),
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "fomo",
+    srcs = glob(["fomo/**/*.py"]),
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/aifocore:aifocore_shm",
+    ],
+)
+
+py_binary(
+    name = "example_vector_dataset",
+    srcs = ["fomo/examples/vector_dataset.py"],
+    main = "fomo/examples/vector_dataset.py",
+    deps = [
+        ":fomo",
+        requirement("numpy"),
+        requirement("psutil"),
+        requirement("torch"),
+    ],
+)
+
+py_binary(
+    name = "example_database_query",
+    srcs = ["fomo/examples/database_query.py"],
+    main = "fomo/examples/database_query.py",
+    deps = [
+        ":fomo",
+        requirement("sqlalchemy"),
+    ],
+)
+
+py_binary(
+    name = "start_data_producer_vector",
+    srcs = ["fomo/tools/start_data_producer_vector.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fomo",
+        requirement("simpleitk"),
+        requirement("numpy"),
+        requirement("torch"),
+        requirement("sqlalchemy"),
+        requirement("matplotlib"),
+    ],
+)
+
+py_binary(
+    name = "make_ct_database",
+    srcs = ["fomo/ct/tools/make_database.py"],
+    data = [
+        ":ct_dataset_configs",
+    ],
+    main = "fomo/ct/tools/make_database.py",
+    deps = [
+        ":fomo",
+        requirement("sqlalchemy"),
+        requirement("omegaconf"),
+        requirement("tqdm"),
+        requirement("simpleitk"),
+    ],
+)
+
+py_binary(
+    name = "make_database_mri",
+    srcs = ["fomo/mri/tools/make_database.py"],
+    main = "fomo/mri/tools/make_database.py",
+    deps = [
+        ":fomo",
+        requirement("numpy"),
+        requirement("sqlalchemy"),
+        requirement("tqdm"),
+        requirement("simpleitk"),
+    ],
+)
+
+py_binary(
+    name = "make_database_generic",
+    srcs = ["fomo/tools/make_database_generic.py"],
+    main = "fomo/tools/make_database_generic.py",
+    deps = [
+        ":fomo",
+        requirement("sqlalchemy"),
+        requirement("omegaconf"),
+        requirement("tqdm"),
+        requirement("simpleitk"),
+    ],
+)
+
+py_binary(
+    name = "find_bad_samples_mri",
+    srcs = ["fomo/mri/tools/find_bad_samples.py"],
+    main = "fomo/mri/tools/find_bad_samples.py",
+    deps = [
+        ":fomo",
+        requirement("pandas"),
+        requirement("numpy"),
+        requirement("sqlalchemy"),
+        requirement("tqdm"),
+        requirement("simpleitk"),
+        requirement("matplotlib"),
+    ],
+)
+
+py_binary(
+    name = "dataset_statistics_mri",
+    srcs = ["fomo/mri/tools/dataset_statistics.py"],
+    main = "fomo/mri/tools/dataset_statistics.py",
+    deps = [
+        ":fomo",
+        requirement("simpleitk"),
+        requirement("numpy"),
+    ],
+)
+
+py_binary(
+    name = "dinov2_train_ct_2d",
+    srcs = ["fomo/ct/train/train2d.py"],
+    data = [":ct_dinov2_configs"],
+    main = "fomo/ct/train/train2d.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fomo",
+        "//third_party/models/dinov2",
+        requirement("kornia"),
+    ],
+)
+
+py_binary(
+    name = "dinov2_train_ct_3d",
+    srcs = ["fomo/ct/train/train3d.py"],
+    data = [":ct_dinov2_configs"],
+    main = "fomo/ct/train/train3d.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fomo",
+        "//third_party/models/dinov2",
+        requirement("kornia"),
+    ],
+)
+
+py_binary(
+    name = "dinov2_train_mri",
+    srcs = ["fomo/mri/train/train.py"],
+    data = [":mri_dinov2_configs"],
+    main = "fomo/mri/train/train.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fomo",
+        "//third_party/models/dinov2",
+        requirement("kornia"),
+        requirement("simpleitk"),
+        requirement("sqlalchemy"),
+    ],
+)

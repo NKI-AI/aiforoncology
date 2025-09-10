@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - override /data: imagenet
+  - override /model: resnet/resnet34
+tags: ["imagenet", "resnet"]
+seed: null
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+model:
+  num_classes: 1000
+  net:
+    num_channels: 3
+    num_classes: ${model.num_classes}
+data:
+  batch_size: 2048
+experiment_name: "train-imagenet_resnet"
+run_label: "r34"

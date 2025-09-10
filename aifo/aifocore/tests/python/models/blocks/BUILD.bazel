@@ -1,0 +1,14 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+py_test(
+    name = "swin_transformer_block_test",
+    srcs = [
+        "swin_transformer_block_test.py",
+    ],
+    pytest_main = True,
+    deps = [
+        "//aifo/aifocore:aifocore_models",
+        requirement("pytest"),
+    ],
+)

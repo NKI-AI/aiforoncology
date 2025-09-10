@@ -1,0 +1,26 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+REQUIREMENTS = [
+    "//aifo/aifocore",
+    requirement("numpy"),
+    requirement("pytest"),
+]
+
+py_test(
+    name = "vector_test",
+    srcs = [
+        "shm/vector_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "grid_test",
+    srcs = [
+        "tiling/grid_test.py",
+    ],
+    pytest_main = True,
+    deps = REQUIREMENTS,
+)

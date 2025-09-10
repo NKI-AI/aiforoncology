@@ -1,0 +1,26 @@
+defaults:
+  - learningrate_monitor.yaml
+  - model_checkpoint.yaml
+  - early_stopping.yaml
+  - model_summary.yaml
+  - rich_progress_bar.yaml
+  - write_file_callback.yaml
+  - _self_
+learningrate_monitor:
+  logging_interval: null
+  log_momentum: false
+model_checkpoint:
+  dirpath: ${paths.output_dir}/checkpoints
+  filename: "epoch_{epoch:03d}"
+  monitor: "validate/loss"
+  mode: "min"
+  save_last: True
+  auto_insert_metric_name: False
+early_stopping:
+  monitor: "validate/loss"
+  patience: 1000
+  mode: "min"
+model_summary:
+  max_depth: -1
+write_file_callback:
+  max_concurrent_queues: 1

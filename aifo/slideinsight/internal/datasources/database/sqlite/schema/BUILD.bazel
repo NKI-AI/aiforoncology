@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "schema",
+    srcs = [
+        "algorithms.go",
+        "annotations.go",
+        "base.go",
+        "cases.go",
+        "email_templates.go",
+        "image_types.go",
+        "notifications.go",
+        "rbac.go",
+        "regions.go",
+        "settings.go",
+        "slides.go",
+        "studies.go",
+        "tenants.go",
+        "users.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources/database/sqlite/schema",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+)

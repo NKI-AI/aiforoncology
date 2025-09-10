@@ -1,0 +1,60 @@
+load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_binary(
+    name = "lib_convert",
+    srcs = ["@openslide_python//:openslide/_convert.c"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-fPIC"],
+    }),
+    defines = ["Py_LIMITED_API=0x030b0000"],  # Always use Limited API for Python 3.11, see setup.py of openslide-python
+    linkshared = True,
+    linkstatic = False,
+    deps = [
+        "@rules_python//python/cc:current_py_cc_headers",
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
+)
+
+genrule(
+    name = "relocate_openslide_so_macos",
+    srcs = ["@openslide//:openslide-shared"],  # is the other one still needed?
+    outs = ["openslide/libopenslide.1.dylib"],  # Place it in the openslide folder
+    cmd = "cp $< $@",  # Copy the file to the correct location
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "relocate_openslide_so_linux",
+    srcs = ["@openslide//:openslide-shared-impl"],
+    outs = ["openslide/libopenslide.so.1"],
+    cmd = "cp $< $@",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "relocate_convert_so",
+    srcs = [":lib_convert"],
+    outs = ["openslide/_convert.so"],  # Place it in the openslide folder
+    cmd = "cp $< $@",  # Copy the file to the correct location
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "openslide_python",
+    srcs = [
+        "@openslide_python//:openslide/__init__.py",
+        "@openslide_python//:openslide/_version.py",
+        "@openslide_python//:openslide/deepzoom.py",
+        "@openslide_python//:openslide/lowlevel.py",
+    ],
+    data = [":relocate_convert_so"] + select({
+        "@platforms//os:macos": [":relocate_openslide_so_macos"],
+        "@platforms//os:linux": [":relocate_openslide_so_linux"],
+        "//conditions:default": [],
+    }),
+)

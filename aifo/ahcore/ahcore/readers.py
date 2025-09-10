@@ -1,0 +1,490 @@
+"""
+Reader classes.
+
+- `H5FileImageReader`: to read files written using the `ahcore.writers.H5FileImageWriter`.
+- `ZarrFileImageReader`: to read files written using the `ahcore.writers.ZarrFileImageWriter`.
+
+If you are loading an image, it is better to use `dlup.SlideImage` with the backends in `ahcore.backends`
+
+"""
+
+import abc
+import errno
+import io
+import json
+import math
+import os
+from enum import Enum
+from pathlib import Path
+from types import TracebackType
+from typing import Any, Literal, Optional, Type
+
+import h5py
+import numpy as np
+import PIL
+import pyvips
+import zarr
+from ahcore.utils.io import get_logger
+from ahcore.utils.types import BoundingBoxType, DataFormat, GenericNumberArray, InferencePrecision
+from zarr.storage import LocalStore
+
+logger = get_logger(__name__)
+
+
+class StitchingMode(str, Enum):
+    CROP = "CROP"
+    AVERAGE = "AVERAGE"
+    MAXIMUM = "MAXIMUM"
+
+
+def crop_to_bbox(array: GenericNumberArray, bbox: BoundingBoxType) -> GenericNumberArray:
+    (start_x, start_y), (width, height) = bbox
+    return array[:, start_y : start_y + height, start_x : start_x + width]
+
+
+class FileImageReader(abc.ABC):
+    def __init__(self, filename: Path, stitching_mode: StitchingMode) -> None:
+        self._filename = filename
+        self._stitching_mode = stitching_mode
+        self.__empty_tile: GenericNumberArray | None = None
+
+        self._file: Optional[Any] = None
+        self._metadata = None
+        self._num_tiles = None
+        self._data_format = None
+        self._mpp = None
+        self._tile_size = None
+        self._tile_overlap = None
+        self._size: Optional[tuple[int, int]] = None
+        self._num_channels = None
+        self._dtype = None
+        self._stride = None
+        self._precision = None
+        self._multiplier = None
+        self._is_binary = None
+        self._num_samples = None
+
+    @classmethod
+    def from_file_path(cls, filename: Path, stitching_mode: StitchingMode = StitchingMode.CROP) -> "FileImageReader":
+        if isinstance(filename, str):
+            filename = Path(filename)
+
+        if not filename.is_file():
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), str(filename))
+
+        return cls(filename=filename, stitching_mode=stitching_mode)
+
+    @property
+    def size(self) -> tuple[int, int]:
+        if self._size is None:
+            self._open_file()
+
+        assert self._size is not None, "Size should be set after opening the file"
+
+        return self._size[0], self._size[1]
+
+    @property
+    def mpp(self) -> float:
+        if not self._mpp:
+            self._open_file()
+            assert self._mpp
+        return self._mpp
+
+    def get_mpp(self, scaling: Optional[float]) -> float:
+        if not self._mpp:
+            self._open_file()
+            assert self._mpp
+        if scaling is None:
+            return self.mpp
+
+        return self._mpp / scaling
+
+    def get_scaling(self, mpp: Optional[float]) -> float:
+        """Inverse of get_mpp()."""
+        if not self._mpp:
+            self._open_file()
+            assert self._mpp
+        if not mpp:
+            return 1.0
+        return self._mpp / mpp
+
+    @abc.abstractmethod
+    def _open_file_handle(self, filename: Path) -> Any:
+        pass
+
+    @abc.abstractmethod
+    def _read_metadata(self) -> None:
+        pass
+
+    def _open_file(self) -> None:
+        if not self._filename.exists():
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), str(self._filename))
+
+        self._file = self._open_file_handle(self._filename)
+
+        self._read_metadata()
+
+        if not self._metadata:
+            raise ValueError("Metadata of file is empty.")
+
+        self._num_samples = self._metadata["num_samples"]
+        self._num_tiles = self._metadata["num_tiles"]
+        # set a standard value if it is not present
+        self._data_format = (
+            DataFormat(self._metadata["data_format"]) if "data_format" in self._metadata.keys() else DataFormat.IMAGE
+        )
+        self._mpp = self._metadata["mpp"]
+        self._tile_size = self._metadata["tile_size"]
+        self._tile_overlap = self._metadata["tile_overlap"]
+        self._size = self._metadata["size"]
+        self._num_channels = self._metadata["num_channels"]
+        self._dtype = self._metadata["dtype"]
+        self._precision = self._metadata["precision"]
+        self._multiplier = self._metadata["multiplier"]
+        self._is_binary = getattr(self._metadata, "is_binary", None)
+        if self._is_binary is not None:
+            logger.warning(
+                f"Found is_binary in metadata, of file {self._filename}. "
+                f"This tag is deprecated and might be removed in future versions"
+            )
+            if self._is_binary:
+                self._data_format = DataFormat.COMPRESSED_IMAGE
+        self._stride = (
+            self._tile_size[0] - self._tile_overlap[0],
+            self._tile_size[1] - self._tile_overlap[1],
+        )
+
+        if self._metadata["has_color_profile"]:
+            _color_profile = self._file["color_profile"][()].tobytes()
+            logger.warning(
+                f"Color profiles are not yet implemented, but {_color_profile} is present in {self._filename}."
+            )
+
+    def __enter__(self) -> "FileImageReader":
+        if self._file is None:
+            self._open_file()
+        return self
+
+    def _empty_tile(self) -> GenericNumberArray:
+        if self.__empty_tile is not None:
+            return self.__empty_tile
+
+        # When this happens we would already be in the read_region, and self._num_channels would be populated.
+        assert self._num_channels
+
+        self.__empty_tile = np.zeros((self._num_channels, *self._tile_size), dtype=self._dtype)
+        return self.__empty_tile
+
+    @property
+    def metadata(self) -> dict[str, Any]:
+        if not self._metadata:
+            self._open_file()
+            assert self._metadata
+        return self._metadata
+
+    def _decompress_and_reshape_data(self, tile: GenericNumberArray) -> GenericNumberArray:
+        assert self._tile_size is not None, "Cannot happen as this is called inside read_region which also checks this"
+
+        if self._data_format == DataFormat.COMPRESSED_IMAGE:
+            with PIL.Image.open(io.BytesIO(tile)) as img:
+                return np.array(img).transpose(
+                    2, 0, 1
+                )  # fixme: this also shouldn't work because the thing is flattened and doesn't have 3 dimensions
+        else:
+            return tile
+
+    def _read_image_region(self, location: tuple[int, int], size: tuple[int, int]) -> pyvips.Image:
+        """
+        Reads a region in the stored h5 file. This function allows for multiple stitching modes,
+        such as cropping, averaging and taking the maximum across borders.
+        """
+        assert self._size is not None
+        assert self._tile_size is not None
+        assert self._tile_overlap is not None
+
+        image_dataset: h5py.Dataset = self._file["data"]
+
+        tile_indices: h5py.Dataset = self._file["tile_indices"]
+
+        total_rows = math.ceil((self._size[1] - self._tile_overlap[1]) / self._stride[1])
+        total_cols = math.ceil((self._size[0] - self._tile_overlap[0]) / self._stride[0])
+
+        assert total_rows * total_cols == self._num_tiles, f"{total_rows=}, {total_cols=} and {self._num_tiles=}"
+        # Equality only holds if features where created without mask
+
+        x, y = location
+        w, h = size
+
+        if x < 0 or y < 0 or x + w > self._size[0] or y + h > self._size[1]:
+            logger.error(f"Requested region is out of bounds: {location}, {self._size}")
+            raise ValueError("Requested region is out of bounds")
+
+        if self._stitching_mode not in StitchingMode:
+            raise ValueError(f"Stitching mode {self._stitching_mode} is not supported.")
+
+        start_row = y // self._stride[1]
+        end_row = min((y + h - 1) // self._stride[1] + 1, total_rows)
+        start_col = x // self._stride[0]
+        end_col = min((x + w - 1) // self._stride[0] + 1, total_cols)
+
+        stitched_image = np.zeros((self._num_channels, h, w), dtype=self._dtype)
+
+        if self._stitching_mode == StitchingMode.AVERAGE:
+            average_mask = np.zeros((h, w), dtype=self._dtype)
+
+        for i in range(start_row, end_row):
+            for j in range(start_col, end_col):
+                tile_idx = (i * total_cols) + j
+                # Map through tile indices
+                tile_index_in_image_dataset = int(tile_indices[tile_idx])
+
+                if tile_index_in_image_dataset == -1:
+                    logger.warning(f"Tile {tile_idx} is not present in the image dataset. Skipping.")
+                    continue
+                else:
+                    tile = self._decompress_and_reshape_data(image_dataset[tile_index_in_image_dataset])
+
+                start_y = i * self._stride[1] - y
+                end_y = start_y + self._tile_size[1]
+                start_x = j * self._stride[0] - x
+                end_x = start_x + self._tile_size[0]
+
+                img_start_y = max(0, start_y)
+                img_end_y = min(h, end_y)
+                img_start_x = max(0, start_x)
+                img_end_x = min(w, end_x)
+
+                if self._stitching_mode == StitchingMode.CROP:
+                    crop_start_y = img_start_y - start_y
+                    crop_end_y = img_end_y - start_y
+                    crop_start_x = img_start_x - start_x
+                    crop_end_x = img_end_x - start_x
+
+                    bbox = (
+                        (crop_start_x, crop_start_y),
+                        (
+                            crop_end_x - crop_start_x,
+                            crop_end_y - crop_start_y,
+                        ),
+                    )
+                    cropped_tile = crop_to_bbox(tile, bbox)
+                    stitched_image[:, img_start_y:img_end_y, img_start_x:img_end_x] = cropped_tile
+
+                elif self._stitching_mode == StitchingMode.AVERAGE:
+                    tile_start_y = max(0, -start_y)
+                    tile_end_y = min(self._tile_size[1], h - start_y)
+                    tile_start_x = max(0, -start_x)
+                    tile_end_x = min(self._tile_size[0], w - start_x)
+
+                    average_mask[img_start_y:img_end_y, img_start_x:img_end_x] += 1
+                    stitched_image[:, img_start_y:img_end_y, img_start_x:img_end_x] += tile[
+                        :, tile_start_y:tile_end_y, tile_start_x:tile_end_x
+                    ]
+
+                elif self._stitching_mode == StitchingMode.MAXIMUM:
+                    tile_start_y = max(0, -start_y)
+                    tile_end_y = min(self._tile_size[1], h - start_y)
+                    tile_start_x = max(0, -start_x)
+                    tile_end_x = min(self._tile_size[0], w - start_x)
+
+                    if i == start_row and j == start_col:
+                        # The first tile cannot be compared with anything. So, we just copy it.
+                        stitched_image[:, img_start_y:img_end_y, img_start_x:img_end_x] = tile[
+                            :, tile_start_y:tile_end_y, tile_start_x:tile_end_x
+                        ]
+
+                    stitched_image[:, img_start_y:img_end_y, img_start_x:img_end_x] = np.maximum(
+                        stitched_image[:, img_start_y:img_end_y, img_start_x:img_end_x],
+                        tile[:, tile_start_y:tile_end_y, tile_start_x:tile_end_x],
+                    )
+
+        # Adjust the precision and convert to float32 before averaging to avoid loss of precision.
+        if self._precision != str(InferencePrecision.UINT8) or self._stitching_mode == StitchingMode.AVERAGE:
+            stitched_image = stitched_image / self._multiplier
+            stitched_image = stitched_image.astype(np.float32)
+
+        if self._stitching_mode == StitchingMode.AVERAGE:
+            overlap_regions = average_mask > 0
+            # Perform division to average the accumulated pixel values
+            stitched_image[:, overlap_regions] = stitched_image[:, overlap_regions] / average_mask[overlap_regions]
+
+        return pyvips.Image.new_from_array(stitched_image.transpose(1, 2, 0))
+
+    def _read_feature_region(self, location: tuple[int, int], size: tuple[int, int]) -> pyvips.Image:
+        """Reads a region in the stored h5 file. This function reads the feature vectors as saved in the cache file.
+        Features are assumed to have no overlap and only work with stitching mode CROP."""
+        assert self._num_samples is not None
+
+        image_dataset: h5py.Dataset = self._file["data"]
+
+        assert image_dataset is not None
+
+        x, y = location
+        w, h = size
+
+        if self._stitching_mode != StitchingMode.CROP:
+            raise NotImplementedError("Stitching mode other than CROP is not supported for features.")
+
+        if image_dataset.shape[0] != self._num_samples:
+            raise ValueError(
+                f"Reading features expects that the saved feature vectors are the same "
+                f"length as the number of samples in the dataset. "
+                f"Feature vector length was {image_dataset.shape[0]}, "
+                f"number of samples in the dataset was {self._num_samples}"
+            )
+
+        if self._tile_overlap != (0, 0):
+            raise ValueError("Reading features expects that the saved feature vectors have no overlap.")
+
+        if x + w > self._num_samples or y + h > 1:
+            raise ValueError(
+                f"Feature vectors are saved as (num_samples, 1) "
+                f"and the requested size {size} at location {location} is too large."
+            )
+
+        # this simplified version of the crop is done as it is faster than the crop for images crop
+        return pyvips.Image.new_from_array(np.expand_dims(image_dataset[x : x + w, :], axis=0).astype(np.float32))
+
+    @property
+    def offset(self) -> tuple[int, int]:
+        """Returns the offset of the grid in the image."""
+        assert self._metadata
+        return self._metadata.get("grid_offset", (0, 0))
+
+    @property
+    def num_channels(self) -> Optional[int]:
+        """Returns the number of channels in the image."""
+        assert self._metadata
+        return self._metadata.get("num_channels", None)
+
+    def read_region(self, location: tuple[int, int], level: int, size: tuple[int, int]) -> pyvips.Image:
+        """
+        Reads a region in the stored h5 file. This function stitches the regions as saved in the cache file.
+        It takes into account:
+        1) The region overlap, several region merging strategies are implemented: cropping, averaging across borders,
+        and taking the maximum across borders.
+        2) If tiles are saved or not. In case the tiles are skipped due to a background mask, an empty tile is returned.
+
+        Parameters
+        ----------
+        location : tuple[int, int]
+            Coordinates (x, y) of the upper left corner of the region.
+        level : int
+            The level of the region. Only level 0 is supported.
+        size : tuple[int, int]
+            The (h, w) size of the extracted region.
+
+        Returns
+        -------
+        pyvips.Image
+            Extracted region
+        """
+        if level != 0:
+            raise ValueError("Only level 0 is supported")
+
+        # Adjust the location based on grid_offset
+        if list(self.offset) != [0, 0]:
+            location = (location[0] - self.offset[0], location[1] - self.offset[1])
+
+        if self._file is None:
+            self._open_file()
+        assert self._file, "File is not open. Should not happen"
+        assert self._tile_size is not None, "self._tile_size should not be None"
+        assert self._tile_overlap is not None, "self._tile_overlap should not be None"
+
+        x, y = location
+        width, height = size
+
+        # Handle image data format with optional padding for out-of-bounds
+        if self._data_format == DataFormat.IMAGE:
+            if (x >= self.size[0] or y >= self.size[1]) or ((x + width) <= 0 or (y + height) <= 0):
+                return pyvips.Image.black(width, height, bands=self._num_channels)
+
+            pad_left = max(0, -x)
+            pad_top = max(0, -y)
+            new_x = max(0, x)
+            new_y = max(0, y)
+
+            new_width = min(width - pad_left, self.size[0] - new_x)
+            new_height = min(height - pad_top, self.size[1] - new_y)
+
+            if new_width > 0 and new_height > 0:
+                region = pyvips.Image.black(width, height, bands=self._num_channels)
+                valid_region = self._read_image_region((new_x, new_y), (new_width, new_height))
+                return region.insert(valid_region, pad_left, pad_top)
+            else:
+                return pyvips.Image.black(width, height, bands=self._num_channels)
+
+        elif self._data_format == DataFormat.FEATURE:
+            return self._read_feature_region(location, size)
+        else:
+            raise NotImplementedError(f"Data format {self._data_format} is not supported.")
+
+    @abc.abstractmethod
+    def close(self) -> None:
+        pass
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Literal[False]:
+        self.close()
+        return False
+
+
+class H5FileImageReader(FileImageReader):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._file: Optional[h5py.File] = None
+
+    def _open_file_handle(self, filename: Path) -> h5py.File:
+        try:
+            file = h5py.File(self._filename, "r")
+        except OSError as e:
+            logger.error(f"Could not open file {self._filename}: {e}")
+            raise e
+        return file
+
+    def _read_metadata(self) -> None:
+        if not self._file:
+            raise ValueError("File is not open.")
+
+        try:
+            self._metadata = json.loads(self._file.attrs["metadata"])
+        except KeyError as e:
+            logger.error(f"Could not read metadata from file {self._filename}: {e}")
+            raise e
+
+    def close(self) -> None:
+        if self._file is not None:
+            self._file.close()  # Close the file in close
+        del self._file  # Reset the file attribute
+
+
+class ZarrFileImageReader(FileImageReader):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._file: Optional[zarr.Group] = None
+
+    def _open_file_handle(self, filename: Path) -> zarr.Group:
+        try:
+            store = LocalStore(str(self._filename))
+            file = zarr.open_group(store=store, mode="r")
+        except OSError as e:
+            logger.error(f"Could not open file {self._filename}: {e}")
+            raise e
+        return file
+
+    def _read_metadata(self) -> None:
+        if not self._file:
+            raise ValueError("File is not open.")
+        try:
+            self._metadata = self._file.attrs.asdict()
+        except KeyError as e:
+            logger.error(f"Could not read metadata from file {self._filename}: {e}")
+            raise e
+
+    def close(self) -> None:
+        del self._file  # Reset the file attribute

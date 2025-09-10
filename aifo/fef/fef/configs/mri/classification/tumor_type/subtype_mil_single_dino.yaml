@@ -1,0 +1,130 @@
+# Lightning CLI Configuration for tumor subtype classification
+model:
+  class_path: fef.models.lightning_modules.classification.ClassificationLightningModule
+  init_args:
+    # Model Architecture
+    backbone:
+      class_path: fef.models.networks.backbones.mri_dinov2.DINOv2VIT
+      init_args:
+        # ViT-B/14 DINO v2 MRI backbone
+        img_size: 256
+        patch_size: 14
+        embed_dim: 768
+        depth: 12
+        num_heads: 12
+        checkpoint_path: "/storage/homefs/vv22k806/models/mri_dinov2_vitb14_pretrain_full.safetensors"
+        timm_ckpt: "vit_base_patch14_dinov2.lvd142m"
+        freeze_backbone: True
+    neck:
+      class_path: fef.models.networks.necks.mil.pooling.AbmilNeck
+      init_args:
+        input_dim: 768
+        hidden_dim: 512
+        dropout: 0.25
+        gated: True
+    head:
+      class_path: fef.models.networks.heads.classification.ClassificationHead
+      init_args:
+        input_dim: 512
+        num_classes: 3 # Adjust for actual number of tumor subtypes
+        dropout: 0.5
+        bias: True
+    # Loss Function
+    loss_fn:
+      class_path: torch.nn.CrossEntropyLoss
+    # Optimizer and Scheduler
+    optimizer:
+      class_path: torch.optim.AdamW
+      init_args:
+        lr: 0.0001
+        weight_decay: 0.01
+    lr_scheduler:
+      class_path: torch.optim.lr_scheduler.ReduceLROnPlateau
+      init_args:
+        mode: min
+        factor: 0.5
+        patience: 5
+        min_lr: 0.00001
+    metrics:
+      - class_path: torchmetrics.classification.MulticlassAccuracy
+        init_args:
+          num_classes: 3
+      - class_path: torchmetrics.classification.MulticlassAUROC
+        init_args:
+          num_classes: 3
+# Lightning Trainer Configuration
+trainer:
+  devices: 1 # Multi-GPU not officially supported
+  accelerator: gpu
+  max_epochs: 50
+  precision: 16-mixed
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 4
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 1
+  default_root_dir: "tumor_type"
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: ${trainer.default_root_dir}/checkpoints
+        monitor: val_loss
+        mode: min
+        save_top_k: 3
+        save_last: True
+        verbose: True
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 10
+        mode: min
+        verbose: True
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: fef.utils.lightning_utils.callbacks.MetricLoggingCallback
+    - class_path: fef.utils.lightning_utils.callbacks.configuration.ConfigurationLogger
+      init_args:
+        filename: "experiment_config.yaml"
+    - class_path: fef.utils.lightning_utils.callbacks.embeddings.ClassificationEmbeddingsWriter
+      init_args:
+        output_dir: "tumor_type/embeddings"
+# Data Configuration
+data:
+  class_path: fef.data.lightning_data.multi_embedding.MultiEmbeddingsClassificationDataset
+  init_args:
+    # Dataset
+    dataset:
+      train:
+        class_path: fef.datasets.classification.mri.mri_cls_datasets_singlescan.MRIMILClassificationDataset
+        init_args: &dataset_args
+          label_file: "/storage/homefs/vv22k806/data/classification/tumor_subtype/labels.csv"
+          label_name: "tumor_subtype"
+          min_class_percentage: 5.0
+          orientation: "LPS"
+          orientation_plane: "axial"
+          contrast_type: "all"
+          slice_mode: "all"
+          cache_size: 5
+          column_mapping:
+            file_path: "file_path"
+            label: "tumor_subtype"
+          target_transforms:
+            class_path: fef.data.transforms.target_transforms.LabelEncoder
+            init_args:
+              label_mapping:
+                "IDC": 0
+                "ILC": 1
+                "Other": 2
+      val:
+        class_path: fef.datasets.classification.mri.mri_cls_datasets_singlescan.MRIMILClassificationDataset
+        init_args:
+          !!merge <<: *dataset_args
+      test:
+        class_path: fef.datasets.classification.mri.mri_cls_datasets_singlescan.MRIMILClassificationDataset
+        init_args:
+          !!merge <<: *dataset_args
+    # Data Loading
+    num_workers: 4
+    batch_size: 8
+    persistent_workers: True
+    pin_memory: True

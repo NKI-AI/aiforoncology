@@ -1,0 +1,3 @@
+_target_: head_calibration.models.components.torchvision_resnet.cresnet50
+num_classes: 10
+num_channels: 3

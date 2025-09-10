@@ -1,0 +1,22 @@
+# @package _global_
+defaults:
+  - override /augmentations: segmentation.yaml
+  - override /callbacks: default.yaml
+  - override /data_description: example/segmentation.yaml
+  - override /datamodule: dataset.yaml
+  - override /losses: segmentation_ce.yaml
+  - override /metrics: segmentation.yaml
+  - override /pre_transform: segmentation.yaml
+  - override /lit_module: monai_segmentation/attention_unet
+  - override /trainer: default.yaml
+  - override /task: segmentation.yaml
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+datamodule:
+  batch_size: 4
+  num_workers: 0
+# Set experiment to true -- allowing any checks to run for experiment
+tags: ["dev"]
+# name of the run determines folder name in logs (if the name is 'default' -- it will complain!)
+task_name: "tissue_background"
+seed: 42

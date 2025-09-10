@@ -1,0 +1,24 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+REQUIREMENTS = [
+    requirement("pytest"),
+    requirement("pytest-mock"),
+    requirement("numpy"),
+    "//aifo/fastslide:fastslide_python",
+]
+
+py_test(
+    name = "slide_reader_test",
+    srcs = ["slide_reader_test.py"],
+    data = [
+        "//data/files/wsis:TCGA-C8-A26X-01Z-00-DX1.FBD86F91-BAD7-4484-8D50-202340FBF242-wsi",
+    ],
+    deps = REQUIREMENTS,
+)
+
+py_test(
+    name = "cache_test",
+    srcs = ["cache_test.py"],
+    deps = REQUIREMENTS,
+)

@@ -1,0 +1,6 @@
+_target_: head_calibration.models.components.fully_connected_net.FullyConnectedNet
+num_classes: 10
+num_channels: 1
+num_layers: 3
+img_dim: 32
+width: 32

@@ -1,0 +1,17 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
+
+py_library(
+    name = "tumor_stroma_segmentation_lib",
+    srcs = ["lib/fix_rois.py"],
+    imports = ["."],
+)
+
+py_binary(
+    name = "darwin_to_dlup_xml",
+    srcs = ["darwin_to_dlup_xml.py"],
+    deps = [
+        ":tumor_stroma_segmentation_lib",
+        "//aifo/ahcore",
+    ],
+)

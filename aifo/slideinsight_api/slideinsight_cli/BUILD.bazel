@@ -1,0 +1,15 @@
+load("@pip//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary")
+
+py_binary(
+    name = "slideinsight_cli",
+    srcs = glob(["**/*.py"]),
+    main = "main.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/slideinsight_api:slideinsight_sdk",
+        requirement("click"),
+        requirement("rich"),
+        requirement("aiohttp"),
+    ],
+)

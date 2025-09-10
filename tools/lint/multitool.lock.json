@@ -1,0 +1,95 @@
+{
+  "$schema": "https://raw.githubusercontent.com/theoremlp/rules_multitool/main/lockfile.schema.json",
+  "ruff": {
+    "binaries": [
+      {
+        "kind": "archive",
+        "url": "https://github.com/astral-sh/ruff/releases/download/0.11.5/ruff-aarch64-unknown-linux-musl.tar.gz",
+        "file": "ruff-aarch64-unknown-linux-musl/ruff",
+        "sha256": "77c11c7a70d3bf499915bab5a7691e955f4127164c4cfb7ef4e0773892ed2509",
+        "os": "linux",
+        "cpu": "arm64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/astral-sh/ruff/releases/download/0.11.5/ruff-x86_64-unknown-linux-musl.tar.gz",
+        "file": "ruff-x86_64-unknown-linux-musl/ruff",
+        "sha256": "067c1c6c4d6033b65fe788f5310075686110b286a102431fb19883c079e2fca1",
+        "os": "linux",
+        "cpu": "x86_64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/astral-sh/ruff/releases/download/0.11.5/ruff-aarch64-apple-darwin.tar.gz",
+        "file": "ruff-aarch64-apple-darwin/ruff",
+        "sha256": "4a5b1a44412bda817debb67d826a565f11b235744870b509f44102403a3a9e89",
+        "os": "macos",
+        "cpu": "arm64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/astral-sh/ruff/releases/download/0.11.5/ruff-x86_64-apple-darwin.tar.gz",
+        "file": "ruff-x86_64-apple-darwin/ruff",
+        "sha256": "c28725c6421d5834b2cd16c7b13c3831b3363d6d558448d7dd3e0aa695551f94",
+        "os": "macos",
+        "cpu": "x86_64"
+      }
+    ]
+  },
+  "shellcheck": {
+    "binaries": [
+      {
+        "kind": "archive",
+        "url": "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.aarch64.tar.xz",
+        "file": "shellcheck-v0.10.0/shellcheck",
+        "sha256": "324a7e89de8fa2aed0d0c28f3dab59cf84c6d74264022c00c22af665ed1a09bb",
+        "os": "linux",
+        "cpu": "arm64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz",
+        "file": "shellcheck-v0.10.0/shellcheck",
+        "sha256": "6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87",
+        "os": "linux",
+        "cpu": "x86_64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.darwin.aarch64.tar.xz",
+        "file": "shellcheck-v0.10.0/shellcheck",
+        "sha256": "bbd2f14826328eee7679da7221f2bc3afb011f6a928b848c80c321f6046ddf81",
+        "os": "macos",
+        "cpu": "arm64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.darwin.x86_64.tar.xz",
+        "file": "shellcheck-v0.10.0/shellcheck",
+        "sha256": "ef27684f23279d112d8ad84e0823642e43f838993bbb8c0963db9b58a90464c2",
+        "os": "macos",
+        "cpu": "x86_64"
+      }
+    ]
+  },
+  "reviewdog": {
+    "binaries": [
+      {
+        "kind": "archive",
+        "url": "https://github.com/reviewdog/reviewdog/releases/download/v0.20.3/reviewdog_0.20.3_Darwin_arm64.tar.gz",
+        "file": "reviewdog",
+        "os": "macos",
+        "cpu": "arm64",
+        "sha256": "a7fbf41913ce5b6f1872d10c136139b7a849190f4f1f0dc1ed4bf74c636f22a2"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/reviewdog/reviewdog/releases/download/v0.20.3/reviewdog_linux_amd64.tar.gz",
+        "file": "reviewdog",
+        "os": "linux",
+        "cpu": "x86_64",
+        "sha256": "f77f4e2493313bc6b93f0d81dc700e98c964c387b2c18674823b14380d90d47b"
+      }
+    ]
+  }
+}

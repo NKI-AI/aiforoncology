@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "auth",
+    srcs = [
+        "core.go",
+        "password.go",
+        "registration.go",
+        "token.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/services/auth",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/config",
+        "//aifo/slideinsight/internal/queue",
+        "//aifo/slideinsight/internal/server/auth",
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/email",
+        "//aifo/slideinsight/internal/server/errors",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/utils",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+        "@org_uber_go_zap//:zap",
+    ],
+)

@@ -1,0 +1,144 @@
+--- pyvips/__init__.py	2025-02-01 15:34:55
++++ pyvips/__init__.py	2025-02-01 15:27:25
+@@ -10,106 +10,36 @@
+ # user code can override this null handler
+ logger.addHandler(logging.NullHandler())
+ 
+-# pull in our module version number, see also setup.py
++# pull in our module version number
+ from .version import __version__
+ 
+-# try to import our binary interface ... if that works, we are in API mode
+-API_mode = False
+-try:
+-    import _libvips
++API_mode = True
++from ._libvips import ffi, lib
+ 
+-    logger.debug('Loaded binary module _libvips')
++logger.debug('Loaded binary module _libvips')
+ 
+-    ffi = _libvips.ffi
+-    vips_lib = _libvips.lib
+-    glib_lib = _libvips.lib
+-    gobject_lib = _libvips.lib
++vips_lib = lib
++glib_lib = lib
++gobject_lib = lib
+ 
+-    # now check that the binary wrapper is for the same version of libvips that
+-    # we find ourseleves linking to at runtime ... if it isn't, we must fall
+-    # back to ABI mode
+-    lib_major = vips_lib.vips_version(0)
+-    lib_minor = vips_lib.vips_version(1)
+-    wrap_major = vips_lib.VIPS_MAJOR_VERSION
+-    wrap_minor = vips_lib.VIPS_MINOR_VERSION
+-    logger.debug('Module generated for libvips %s.%s' %
+-                 (wrap_major, wrap_minor))
+-    logger.debug('Linked to libvips %s.%s' % (lib_major, lib_minor))
++# now check that the binary wrapper is for the same version of libvips that
++# we find ourseleves linking to at runtime ... if it isn't, we must fall
++# back to ABI mode
++lib_major = vips_lib.vips_version(0)
++lib_minor = vips_lib.vips_version(1)
++wrap_major = vips_lib.VIPS_MAJOR_VERSION
++wrap_minor = vips_lib.VIPS_MINOR_VERSION
++logger.debug(f'Module generated for libvips {wrap_major}.{wrap_minor}')
++logger.debug(f'Linked to libvips {lib_major}.{lib_minor}')
+ 
+-    if wrap_major != lib_major or wrap_minor != lib_minor:
+-        raise Exception('bad wrapper version')
++if wrap_major != lib_major or wrap_minor != lib_minor:
++    raise Exception('bad wrapper version')
+ 
+-    API_mode = True
+-
+-except Exception as e:
+-    logger.debug('Binary module load failed: %s' % e)
+-    logger.debug('Falling back to ABI mode')
+-
+-    from cffi import FFI
+-
+-    ffi = FFI()
+-
+-    _is_windows = os.name == 'nt'
+-    _is_mac = sys.platform == 'darwin'
+-
+-    # yuk
+-    if _is_windows:
+-        vips_lib = ffi.dlopen('libvips-42.dll')
+-    elif _is_mac:
+-        vips_lib = ffi.dlopen('libvips.42.dylib')
+-    else:
+-        vips_lib = ffi.dlopen('libvips.so.42')
+-
+-    logger.debug('Loaded lib %s', vips_lib)
+-
+-    if _is_windows:
+-        # On Windows, `GetProcAddress()` can only search in a specified DLL and
+-        # doesn't look into its dependent libraries for symbols. Therefore, we
+-        # check if the GLib DLLs are available. If these can not be found, we
+-        # assume that GLib is statically linked into libvips.
+-        try:
+-            glib_lib = ffi.dlopen('libglib-2.0-0.dll')
+-            gobject_lib = ffi.dlopen('libgobject-2.0-0.dll')
+-
+-            logger.debug('Loaded lib %s', glib_lib)
+-            logger.debug('Loaded lib %s', gobject_lib)
+-        except Exception:
+-            glib_lib = vips_lib
+-            gobject_lib = vips_lib
+-    else:
+-        # macOS and *nix uses `dlsym()`, which also searches for named symbols
+-        # in the dependencies of the shared library. Therefore, we can support
+-        # a single shared libvips library with all dependencies statically
+-        # linked.
+-        glib_lib = vips_lib
+-        gobject_lib = vips_lib
+-
+-    ffi.cdef('''
+-        int vips_init (const char* argv0);
+-        int vips_version (int flag);
+-    ''')
+-
+ if vips_lib.vips_init(sys.argv[0].encode()) != 0:
+     raise Exception('unable to init libvips')
+ 
+ logger.debug('Inited libvips')
+ 
+-if not API_mode:
+-    from .vdecls import cdefs
+-
+-    major = vips_lib.vips_version(0)
+-    minor = vips_lib.vips_version(1)
+-    micro = vips_lib.vips_version(2)
+-    features = {
+-        'major': major,
+-        'minor': minor,
+-        'micro': micro,
+-        'api': False,
+-    }
+-
+-    ffi.cdef(cdefs(features))
+-
+-
+ from .error import *
+ 
+ # redirect all vips warnings to logging
+@@ -141,14 +71,14 @@
+     @ffi.def_extern()
+     def _log_handler_callback(domain, level, message, user_data):
+         logger.log(GLogLevelFlags.LEVEL_TO_LOGGER[level],
+-                   '{0}: {1}'.format(_to_string(domain), _to_string(message)))
++                   f'{_to_string(domain)}: {_to_string(message)}')
+ 
+     # keep a ref to the cb to stop it being GCd
+     _log_handler_cb = glib_lib._log_handler_callback
+ else:
+     def _log_handler_callback(domain, level, message, user_data):
+         logger.log(GLogLevelFlags.LEVEL_TO_LOGGER[level],
+-                   '{0}: {1}'.format(_to_string(domain), _to_string(message)))
++                   f'{_to_string(domain)}: {_to_string(message)}')
+ 
+     # keep a ref to the cb to stop it being GCd
+     _log_handler_cb = ffi.callback('GLogFunc', _log_handler_callback)

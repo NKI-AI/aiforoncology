@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "validation",
+    srcs = [
+        "custom_validators.go",
+        "validator.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/validation",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/domain",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_gofiber_fiber_v2//:fiber",
+    ],
+)
