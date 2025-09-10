@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "notifications",
+    srcs = ["notifications.go"],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/notifications",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/services",
+        "@com_github_gofiber_contrib_websocket//:websocket",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)

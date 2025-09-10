@@ -184,7 +184,7 @@ inline absl::StatusOr<T> AddTrace(absl::StatusOr<T> const& sor,
  * @param code    The absl::StatusCode to use.
  * @param message The error message.
  */
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,cppcoreguidelines-avoid-do-while)
 #define MAKE_STATUS(code, message)                                        \
   ::aifocore::status::AddTrace(absl::Status((code), (message)), __func__, \
                                __FILE__, __LINE__, (message))
@@ -196,7 +196,7 @@ inline absl::StatusOr<T> AddTrace(absl::StatusOr<T> const& sor,
  * @param code     The absl::StatusCode to use.
  * @param message  The error message.
  */
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,cppcoreguidelines-avoid-do-while)
 #define MAKE_STATUSOR(type, code, message)                            \
   ::aifocore::status::AddTrace<type>(absl::Status((code), (message)), \
                                      __func__, __FILE__, __LINE__, (message))
@@ -209,7 +209,7 @@ inline absl::StatusOr<T> AddTrace(absl::StatusOr<T> const& sor,
  * @param expr  A Status‐producing expression.
  * @param msg   Optional message for this frame.
  */
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,cppcoreguidelines-avoid-do-while)
 #define RETURN_IF_ERROR(expr, msg)                                      \
   do {                                                                  \
     auto _st = ::aifocore::status::AddTrace((expr), __func__, __FILE__, \
@@ -221,20 +221,57 @@ inline absl::StatusOr<T> AddTrace(absl::StatusOr<T> const& sor,
 /**
  * @brief Unpack a StatusOr<T> into lhs or return on error with a trace.
  *
- * On error, appends this function as a frame (with msg) and returns.
+ * On error, appends this function as a frame (with optional msg) and returns.
  *
  * @param lhs   Target variable to assign.
  * @param expr  A StatusOr<T>‐producing expression.
- * @param msg   Optional message for this frame.
+ * @param ...   Optional message for this frame.
  */
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define ASSIGN_OR_RETURN(lhs, expr, msg)                                 \
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,cppcoreguidelines-avoid-do-while)
+#define ASSIGN_OR_RETURN(lhs, expr, ...)                                 \
   do {                                                                   \
     auto _sor = ::aifocore::status::AddTrace((expr), __func__, __FILE__, \
-                                             __LINE__, (msg));           \
+                                             __LINE__, ##__VA_ARGS__);   \
     if (!_sor.ok())                                                      \
       return _sor.status();                                              \
     lhs = std::move(_sor.value());                                       \
   } while (0)
+
+/**
+ * @brief Unpack a StatusOr<T> into lhs or return on error with a trace.
+ * For use in functions that return StatusOr<U>.
+ *
+ * On error, appends this function as a frame (with msg) and returns the status.
+ *
+ * @param lhs   Target variable to assign.
+ * @param expr  A StatusOr<T>‐producing expression.
+ * @param ...   Optional message for this frame.
+ */
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,cppcoreguidelines-avoid-do-while)
+#define ASSIGN_OR_RETURN_STATUSOR(lhs, expr, ...)                        \
+  do {                                                                   \
+    auto _sor = ::aifocore::status::AddTrace((expr), __func__, __FILE__, \
+                                             __LINE__, ##__VA_ARGS__);   \
+    if (!_sor.ok())                                                      \
+      return _sor.status();                                              \
+    lhs = std::move(_sor.value());                                       \
+  } while (0)
+
+/**
+ * @brief Declare a variable and unpack a StatusOr<T> into it or return on error with a trace.
+ * For use in functions that return StatusOr<U>.
+ *
+ * Declares the variable and then assigns the result of the expression to it.
+ * On error, appends this function as a frame and returns the status.
+ *
+ * @param type   The type of the variable to declare.
+ * @param name   The name of the variable to declare.
+ * @param expr   A StatusOr<T>‐producing expression.
+ * @param ...    Optional message for this frame.
+ */
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,cppcoreguidelines-avoid-do-while)
+#define DECLARE_ASSIGN_OR_RETURN_STATUSOR(type, name, expr, ...) \
+  type name;                                                     \
+  ASSIGN_OR_RETURN_STATUSOR(name, expr, ##__VA_ARGS__)
 
 #endif  // AIFO_AIFOCORE_INCLUDE_AIFOCORE_STATUS_STATUS_MACROS_H_

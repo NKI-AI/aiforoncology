@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "notifications",
+    srcs = ["notifications.go"],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources/database/sqlite/notifications",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/ports",
+    ],
+)

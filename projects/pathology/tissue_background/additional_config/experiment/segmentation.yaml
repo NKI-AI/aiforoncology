@@ -3,7 +3,7 @@
 # bazelisk run //projects/pathology/tissue_background:train -- experiment=segmentation
 defaults:
   - override /augmentations: segmentation
-  - override /lit_module: monai_segmentation/unet
+  - override /lit_module: monai_segmentation/attention_unet
   - override /callbacks: default
   - override /data_description: tissue_background
   - override /datamodule: dataset
@@ -21,3 +21,5 @@ tags: ["dev"]
 # name of the run determines folder name in logs (if the name is 'default' -- it will complain!)
 task_name: "tissue_background"
 seed: 42
+trainer:
+  max_epochs: 200

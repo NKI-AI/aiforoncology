@@ -4,11 +4,12 @@ package processor
 import (
 	"errors"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/NKI-AI/aiforoncology/src/golang/research/dcmw/internal/dicomreader"
 	"github.com/NKI-AI/aiforoncology/src/golang/research/dcmw/internal/models"
 	"gorm.io/gorm"
-	"log"
-	"time"
 )
 
 type ProcessedData struct {

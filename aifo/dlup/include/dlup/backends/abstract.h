@@ -1,4 +1,5 @@
 // Copyright 2024 Jonas Teuwen. All Rights Reserved.
+// Copyright 2025 Joren Brunekreef. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -75,7 +76,7 @@ struct SlideMetadata {
   }
 };
 
-absl::Status CheckIfMppIsValid(double mpp_x, double mpp_y) {
+inline absl::Status CheckIfMppIsValid(double mpp_x, double mpp_y) {
   if (mpp_x <= 0.0 || mpp_y <= 0.0) {
     return MAKE_STATUS(absl::StatusCode::kInvalidArgument,
                        "MPP values must be greater than zero.");

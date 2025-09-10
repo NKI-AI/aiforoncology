@@ -1,0 +1,17 @@
+# SlideInsight Python SDK Requirements
+
+# Core async HTTP client
+aiohttp>=3.9.0
+
+# CLI tools
+click>=8.1.0
+rich>=13.0.0
+
+# Development and testing (optional)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+mypy>=1.0.0
+
+# For the existing script compatibility
+requests>=2.28.0 

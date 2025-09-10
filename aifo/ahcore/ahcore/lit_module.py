@@ -183,8 +183,6 @@ class AhCoreLightningModule(pl.LightningModule):
             _prediction = batch["prediction"]
 
         loss = self._loss(_prediction, _target, roi)
-        if batch_idx >= 1000:
-            pass
 
         # The relevant_dict contains values to know where the tiles originate.
         _relevant_dict = {k: v for k, v in batch.items() if k in self.RELEVANT_KEYS}

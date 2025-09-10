@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "studies",
+    srcs = [
+        "adapter.go",
+        "crud.go",
+        "queries.go",
+        "relations.go",
+        "search.go",
+        "soft_delete.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources/database/sqlite/studies",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/errors",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/utils",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)

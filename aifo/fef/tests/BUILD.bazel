@@ -24,3 +24,44 @@ py_test(
         requirement("torch"),
     ],
 )
+
+py_test(
+    name = "patch_divisible_padder_test",
+    srcs = ["patch_divisible_padder_test.py"],
+    pytest_main = True,
+    deps = [
+        "//aifo/fef",
+        requirement("kaiko-eva"),
+        requirement("pytest"),
+        requirement("torch"),
+        requirement("torchvision"),
+        requirement("numpy"),
+    ],
+)
+
+py_test(
+    name = "volume_bounding_box_cropper_test",
+    srcs = ["volume_bounding_box_cropper_test.py"],
+    pytest_main = True,
+    deps = [
+        "//aifo/fef",
+        requirement("kaiko-eva"),
+        requirement("pytest"),
+        requirement("torch"),
+        requirement("torchvision"),
+        requirement("numpy"),
+    ],
+)
+
+py_test(
+    name = "transforms_test",
+    srcs = ["transforms_test.py"],
+    pytest_main = True,
+    deps = [
+        "//aifo/fef",
+        requirement("kaiko-eva"),
+        requirement("pytest"),
+        requirement("torch"),
+        requirement("torchvision"),
+    ],
+)

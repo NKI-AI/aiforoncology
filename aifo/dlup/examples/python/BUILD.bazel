@@ -48,3 +48,16 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = ["//aifo/dlup"],
 )
+
+py_binary(
+    name = "slidescore_to_dlup_xml",
+    srcs = ["slidescore_to_dlup_xml.py"],
+    data = [
+        "files/slidescore_annotation_test.txt",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("matplotlib"),
+        "//aifo/dlup",
+    ],
+)

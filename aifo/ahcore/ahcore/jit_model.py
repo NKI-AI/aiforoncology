@@ -8,8 +8,6 @@ from omegaconf import DictConfig
 
 dotenv.load_dotenv(override=True)
 
-from ahcore.hydra_plugins import register_additional_config_search_path  # noqa: E402
-
 
 class ModuleToJit(nn.Module):
     def __init__(self, module):
@@ -18,10 +16,7 @@ class ModuleToJit(nn.Module):
         self._model.eval()
 
     def forward(self, x):
-        if hasattr(self, "_augmentations"):
-            x = self._augmentations(x)
-        x = self._model(x / 255.0)
-        return x
+        return self._model(x)
 
 
 def compile_jit(module: pl.LightningModule, config: DictConfig) -> None:
@@ -33,34 +28,24 @@ def compile_jit(module: pl.LightningModule, config: DictConfig) -> None:
 
 @hydra.main(
     config_path=str(Path(__file__).parent / "config"),
-    config_name="inference.yaml",
+    config_name="jit_model.yaml",
     version_base="1.3",
 )
 def main(config: DictConfig) -> None:
-    # Imports can be nested inside @hydra.main to optimize tab completion
-    # https://github.com/facebookresearch/hydra/issues/934
-    from ahcore.entrypoints import general_setup
-    from ahcore.utils.io import extras, print_config, validate_config
+    # data description is needed for num_classes
+    data_description = hydra.utils.instantiate(config.data_description)
+    model = hydra.utils.instantiate(config.lit_module, data_description=data_description)
 
-    # Validate config -- Fails if there are mandatory missing values
-    validate_config(config)
-
-    # Applies optional utilities
-    extras(config)
-
-    print_config(config, resolve=True)
-
-    # Setup model and datamodule
-    # TODO: Datamodule not needed for JIT compilation
-    model, datamodule = general_setup(config)
+    ckpt_path = config.get("ckpt_path", None)
+    assert ckpt_path is not None, "Checkpoint path not provided in config."
+    lit_ckpt = torch.load(ckpt_path, weights_only=False)
+    state_dict = lit_ckpt["state_dict"]
+    # remove augmentations from state_dict
+    state_dict = {k: v for k, v in state_dict.items() if "_augmentations" not in k}
+    model.load_state_dict(state_dict)
 
     # Compile model
     compile_jit(model, config)
-
-
-def jit_model_with_additional_config(additional_config_path: Path):
-    register_additional_config_search_path(additional_config_path)
-    main()
 
 
 if __name__ == "__main__":

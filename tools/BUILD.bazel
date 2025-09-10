@@ -8,5 +8,5 @@ java_binary(
 
 filegroup(
     name = "copybara_config",
-    srcs = ["//aifo/direct/tools:copy.bara.sky"],
+    srcs = ["copy.bara.sky"],
 )

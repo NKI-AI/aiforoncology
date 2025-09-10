@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "monitor",
+    srcs = [
+        "config.go",
+        "index.go",
+        "monitor.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/monitor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_gofiber_fiber_v2//:fiber",
+        "@com_github_shirou_gopsutil_v4//cpu",
+        "@com_github_shirou_gopsutil_v4//load",
+        "@com_github_shirou_gopsutil_v4//mem",
+        "@com_github_shirou_gopsutil_v4//net",
+        "@com_github_shirou_gopsutil_v4//process",
+    ],
+)

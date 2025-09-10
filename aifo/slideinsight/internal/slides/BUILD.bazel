@@ -1,0 +1,30 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "slides",
+    srcs = [
+        "common_props.go",
+        "factory.go",
+        "fastslide_adapter.go",
+        "openslide_adapter.go",
+        "slide.go",
+        "tiff_adapter.go",
+        "xyz.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/slides",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/fastslide_go",
+        "//aifo/openslide_go/openslide",
+        "//aifo/slideinsight/internal/tiff",
+        "@org_golang_x_image//draw",
+    ],
+)
+
+go_test(
+    name = "slides_test",
+    srcs = [
+        "factory_test.go",
+    ],
+    embed = [":slides"],
+)

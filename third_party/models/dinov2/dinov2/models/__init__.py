@@ -8,7 +8,6 @@ import logging
 import torch
 
 from . import vision_transformer as vits
-from dinov2.layers.patch_embed import PatchEmbed
 
 logger = logging.getLogger("dinov2")
 
@@ -20,7 +19,6 @@ def build_model(args, only_teacher=False, img_size=224, custom_pretrained_path: 
             img_size=img_size,
             patch_size=args.patch_size,
             init_values=args.layerscale,
-            embed_layer=args.embed_layer if hasattr(args, "embed_layer") else PatchEmbed,
             ffn_layer=args.ffn_layer,
             block_chunks=args.block_chunks,
             qkv_bias=args.qkv_bias,

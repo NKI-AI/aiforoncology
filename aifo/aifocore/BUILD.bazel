@@ -1,4 +1,5 @@
-load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
@@ -159,10 +160,33 @@ pybind_extension(
     ],
 )
 
+pybind_extension(
+    name = "aifocore/pathology/inference_engine",
+    srcs = ["//aifo/aifocore/src/pathology:inference_engine_module"],
+    copts = ["-fvisibility=hidden"],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-exported_symbol,_PyInit__inference_engine"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/ahcore:inference_engine",
+        "@abseil-cpp//absl/status:status",
+    ],
+)
+
 py_library(
     name = "aifocore_tiling",
     srcs = glob(["**/*.py"]),
     data = [":aifocore/tiling/_grid"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "aifocore_pathology",
+    srcs = glob(["aifocore/pathology/**/*.py"]),
+    data = [":aifocore/pathology/inference_engine"],
+    imports = ["."],
     visibility = ["//visibility:public"],
 )
 
@@ -175,13 +199,39 @@ py_library(
 )
 
 py_library(
+    name = "aifocore_models",
+    srcs = glob(["aifocore/models/**/*.py"]),
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("torch"),
+    ],
+)
+
+py_library(
     name = "aifocore",
     srcs = glob(["aifocore/**/*.py"]),
     data = [
+        ":aifocore_pathology",
         ":aifocore_shm",
         ":aifocore_tiling",
     ],
     imports = ["."],
     visibility = ["//visibility:public"],
     deps = [],
+)
+
+py_binary(
+    name = "bulk_wsi_inference",
+    srcs = ["aifocore/pathology/bulk_inference.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aifocore_pathology",
+        requirement("tqdm"),
+    ],
+)
+
+alias(
+    name = "wsi_inference",
+    actual = "//aifo/aifocore/src/pathology:inference",
 )

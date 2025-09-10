@@ -15,6 +15,9 @@ exports_files(
         ".editorconfig",
         ".clang-format",
         ".clang-tidy",
+        ".prettierignore",
+        ".gitattributes",
+        ".yamlfmt.yaml",
     ],
 )
 
@@ -36,6 +39,11 @@ alias(
 alias(
     name = "tensorboard",
     actual = "//tools/utilities:tensorboard",
+)
+
+alias(
+    name = "jupyter",
+    actual = "//bazel:jupyter",
 )
 
 refresh_compile_commands(

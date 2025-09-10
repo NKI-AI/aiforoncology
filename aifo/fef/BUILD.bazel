@@ -56,6 +56,8 @@ py_binary(
     deps = [
         "//aifo/fef",
         requirement("kaiko-eva"),
+        requirement("matplotlib"),
         requirement("simpleitk"),
+        requirement("mlflow"),
     ],
 )

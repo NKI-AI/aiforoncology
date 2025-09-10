@@ -4,4 +4,4 @@ __version__ = "0.0.1"
 
 import ahcore.writers as writers
 
-__all__ = ("writers",)
+__all__ = ["writers"]

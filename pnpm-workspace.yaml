@@ -1,2 +1,3 @@
 packages:
-  - 'aifo/slidescope/ui'
+  - '.'
+  - 'aifo/slideinsight/ui'

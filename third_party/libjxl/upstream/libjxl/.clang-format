@@ -1,0 +1,6 @@
+BasedOnStyle: Google
+IncludeCategories:
+  - Regex:           '^<hwy/'
+    Priority:        2
+DisableFormat: true
+SortIncludes: Never

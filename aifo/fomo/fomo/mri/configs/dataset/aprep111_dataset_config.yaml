@@ -1,0 +1,3 @@
+- path: /projects/nki-breast-mri/snapshot/aprep111/data
+  extension: .nii.gz
+  exclude: ".*mask.*" # Exclude any files that contain 'mask' in their name 

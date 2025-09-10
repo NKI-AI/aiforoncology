@@ -1,0 +1,26 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "domain",
+    srcs = [
+        "algorithms.go",
+        "auth.go",
+        "cases.go",
+        "errors.go",
+        "groups.go",
+        "labels.go",
+        "notifications.go",
+        "permissions.go",
+        "raster_annotations.go",
+        "regions.go",
+        "roles.go",
+        "settings.go",
+        "slides.go",
+        "studies.go",
+        "tenants.go",
+        "users.go",
+        "vector_annotations.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/domain",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+)

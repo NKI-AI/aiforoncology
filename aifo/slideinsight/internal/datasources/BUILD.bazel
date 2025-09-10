@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "datasources",
+    srcs = ["data_sources.go"],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/datasources/database",
+        "//aifo/slideinsight/internal/server/ports",
+    ],
+)

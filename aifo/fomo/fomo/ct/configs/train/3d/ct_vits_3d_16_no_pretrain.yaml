@@ -33,8 +33,7 @@ train:
   OFFICIAL_EPOCH_LENGTH: 1250
   centering: "centering"
 student:
-  arch: vit_small_3d
-  embed_layer: "PatchEmbed3d"
+  arch: vit_3d_small
   in_chans: 1
   img_size: [24, 224, 224]
   patch_size: [8, 16, 16]

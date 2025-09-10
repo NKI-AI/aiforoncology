@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "config",
+    srcs = [
+        "config.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/config",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "@com_github_gofiber_fiber_v2//log",
+        "@in_gopkg_yaml_v3//:yaml_v3",
+    ],
+)

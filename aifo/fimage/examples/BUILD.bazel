@@ -1,0 +1,11 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "demo",
+    srcs = ["demo.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/fimage",
+        "//third_party/CLI11",
+    ],
+)

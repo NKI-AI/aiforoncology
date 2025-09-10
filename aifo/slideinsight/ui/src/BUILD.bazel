@@ -1,0 +1,20 @@
+load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "copy_to_bin")
+
+copy_to_bin(
+    name = "src",
+    srcs = glob(
+        [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.svg",
+            "**/*.css",
+            "**/*.json",
+            "**/*.wasm",
+            "**/*.js",
+        ],
+        exclude = [
+            "features/viewer/components/map/libjxl/**",
+        ],
+    ),
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+)

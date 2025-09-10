@@ -40,6 +40,7 @@ py_test(
         "files/halo_holes.annotations",
         "files/qupath05.geojson",
         "files/raster.json",
+        "files/slidescore_annotation_test.txt",
         "files/test_different_types_halo.annotations",
     ],
     pytest_main = True,

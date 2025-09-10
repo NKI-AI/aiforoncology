@@ -85,13 +85,11 @@ def print_config(
     config: DictConfig,
     fields: Sequence[str] = (
         "trainer",
-        "model",
+        "lit_module",
         "experiment",
-        "transforms",
-        "datamodule",
+        "data_description",
         "callbacks",
         "logger",
-        "test_after_training",
         "seed",
         "name",
     ),
@@ -243,7 +241,7 @@ def load_weights(model: LightningModule, config: DictConfig) -> LightningModule:
         raise ValueError("Checkpoint path not provided in config.")
     else:
         # Load checkpoint weights
-        lit_ckpt = torch.load(config.ckpt_path)
+        lit_ckpt = torch.load(config.ckpt_path, weights_only=False)
         model.load_state_dict(lit_ckpt["state_dict"], strict=True)
     return model
 

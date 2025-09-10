@@ -25,6 +25,19 @@ relplot_requirements = [
     requirement("scikit-learn"),
 ]
 
+genrule(
+    name = "generate_env",
+    srcs = [".env.example"],
+    outs = [".env"],
+    cmd = """
+        if [ ! -f $(location .env) ]; then
+            cp $(location .env.example) $(location .env)
+        fi
+        touch $(location .env)
+    """,
+    message = "Ensuring .env file exists from .env.example if missing.",
+)
+
 py_library(
     name = "head_calibration",
     srcs = glob(["head_calibration/**/*.py"]),
@@ -43,8 +56,8 @@ py_binary(
     name = "train",
     srcs = ["train.py"],
     data = [
-        ".env",
         "configs",
+        ":generate_env",
     ],
     env = {
         "HYDRA_FULL_ERROR": "1",

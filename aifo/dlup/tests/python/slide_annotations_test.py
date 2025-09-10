@@ -238,6 +238,70 @@ class TestAnnotations:
         output_color_mask = halo_annotations.color_lut[region.polygons.to_mask().numpy()]
         assert output_color_mask.sum() == 51327280
 
+    def test_slidescore_annotations(self):
+        file_path = TEST_FILES_PATH / "slidescore_annotation_test.txt"
+        assert file_path.exists()
+        annotations = SlideAnnotations.from_file_path(file_path, reader="slidescore_tsv", box_as_polygon=True)
+
+        assert annotations.num_points == 4
+        # 5 polygons + 2 ellipses + 1 brush (as polygon with holes)
+        assert annotations.num_polygons == 8
+
+        # Check labels using available_labels property
+        available_labels = annotations.available_classes
+        assert "Polygon Annotations" in available_labels
+        assert "Ellispe Annotations" in available_labels
+        assert "Point Annotations" in available_labels
+
+        # Check that at least one polygon is an ellipse approximation
+        found_ellipse = any(p.get_field("_ellipse_approximation") for p in annotations.polygons)
+        assert found_ellipse
+
+        # Export to slidescore TSV and re-import
+        with tempfile.NamedTemporaryFile(suffix=".txt") as temp_tsv:
+            temp_tsv.write(
+                annotations.as_slidescore_tsv(
+                    image_id=1234, image_name="Test Image", user_email="j.doe@example.com"
+                ).encode("utf-8")
+            )
+            temp_tsv.flush()
+            reimported = SlideAnnotations.from_file_path(temp_tsv.name, reader="slidescore_tsv", box_as_polygon=True)
+
+        assert reimported.num_points == annotations.num_points
+        assert reimported.num_polygons == annotations.num_polygons
+        assert reimported.available_classes == annotations.available_classes
+        assert reimported.polygons == annotations.polygons
+        assert reimported.points == annotations.points
+        assert reimported.boxes == annotations.boxes
+
+    def test_conversion_slidescore_geojson(self):
+        file_path = TEST_FILES_PATH / "slidescore_annotation_test.txt"
+        assert file_path.exists()
+        slidescore_annotations = SlideAnnotations.from_file_path(
+            file_path, reader="slidescore_tsv", box_as_polygon=True
+        )
+
+        with tempfile.NamedTemporaryFile(suffix=".xml") as dlup_xml_out:
+            with open(dlup_xml_out.name, "w") as f:
+                f.write(slidescore_annotations.as_dlup_xml())
+            dlup_annotations = SlideAnnotations.from_dlup_xml(pathlib.Path(dlup_xml_out.name))
+
+        # Number of points and polygons should be preserved
+        assert slidescore_annotations.num_points == dlup_annotations.num_points
+        assert slidescore_annotations.num_polygons == dlup_annotations.num_polygons
+
+        # Polygons and points should be equal (ellipses are polygons after round-trip)
+        # Remove ellipse-specific attributes from both slidescore_annotations and dlup_annotations before comparison
+        ellipse_attrs = ["_ellipse_approximation", "_ellipse_center", "_ellipse_size"]
+        for polygons in (slidescore_annotations.polygons, dlup_annotations.polygons):
+            for poly in polygons:
+                for attr in ellipse_attrs:
+                    poly.set_field(attr, None)
+
+        assert slidescore_annotations.polygons == dlup_annotations.polygons
+        assert slidescore_annotations.points == dlup_annotations.points
+        assert slidescore_annotations.boxes == dlup_annotations.boxes
+
     def test_reexpert_dlup_xml(self):
         with tempfile.NamedTemporaryFile(suffix=".xml") as dlup_file:
             with open(dlup_file.name, "w") as f:
@@ -264,7 +328,9 @@ class TestAnnotations:
         annotations = SlideAnnotations.from_geojson(TEST_FILES_PATH / "qupath05.geojson")
         assert len(annotations.available_classes) == 2
 
-    @pytest.mark.parametrize("class_method", ["from_geojson", "from_halo_xml", "from_dlup_xml", "from_asap_xml"])
+    @pytest.mark.parametrize(
+        "class_method", ["from_geojson", "from_halo_xml", "from_dlup_xml", "from_asap_xml", "from_slidescore_tsv"]
+    )
     def test_missing_file_constructor(self, class_method):
         constructor = getattr(SlideAnnotations, class_method)
         with pytest.raises(FileNotFoundError):

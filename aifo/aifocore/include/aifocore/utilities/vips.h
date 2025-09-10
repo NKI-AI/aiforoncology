@@ -1,4 +1,5 @@
 // Copyright 2024 Jonas Teuwen. All Rights Reserved.
+// Copyright 2025 Joren Brunekreef. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,6 +64,8 @@ class VipsInitializer {
 absl::Status SaveVipsImageToFile(const vips::VImage& image,
                                  const fs::path& filename,
                                  vips::VOption* options = nullptr) {
+  vips_concurrency_set(
+      1);  // TODO(jorenbrunekreef) python binding crashes if this is not set.
   try {
     if (options) {
       image.write_to_file(filename.string().c_str(), options);

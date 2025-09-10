@@ -95,6 +95,19 @@ py_binary(
 )
 
 py_binary(
+    name = "make_database_generic",
+    srcs = ["fomo/tools/make_database_generic.py"],
+    main = "fomo/tools/make_database_generic.py",
+    deps = [
+        ":fomo",
+        requirement("sqlalchemy"),
+        requirement("omegaconf"),
+        requirement("tqdm"),
+        requirement("simpleitk"),
+    ],
+)
+
+py_binary(
     name = "find_bad_samples_mri",
     srcs = ["fomo/mri/tools/find_bad_samples.py"],
     main = "fomo/mri/tools/find_bad_samples.py",
@@ -157,5 +170,6 @@ py_binary(
         "//third_party/models/dinov2",
         requirement("kornia"),
         requirement("simpleitk"),
+        requirement("sqlalchemy"),
     ],
 )

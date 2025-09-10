@@ -34,5 +34,5 @@ class TestPatchEmbed3d:
         )
 
         # act & assert
-        with pytest.raises(AssertionError, match="Input image depth 15 is not a multiple of patch height 16"):
+        with pytest.raises(ValueError):
             patch_embed(input_tensor)

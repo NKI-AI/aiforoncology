@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "regions",
+    srcs = ["adapter.go"],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources/database/sqlite/regions",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/utils",
+    ],
+)

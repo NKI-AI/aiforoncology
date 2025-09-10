@@ -1,0 +1,51 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "libjxl_go",
+    srcs = [
+        "decode.go",
+        "encode.go",
+        "libjxl.go",
+        "quality_metrics.go",
+    ],
+    cdeps = [
+        "//third_party/libjxl:libjxl",
+        "//third_party/libjxl:libjxl_threads",
+    ],
+    cgo = True,
+    importpath = "aifo.dev/aifo/libjxl_go",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "decode_oneshot",
+    srcs = ["cmd/decode_oneshot.go"],
+    deps = [":libjxl_go"],
+)
+
+go_binary(
+    name = "image_to_jxl",
+    srcs = ["cmd/image_to_jxl.go"],
+    deps = [":libjxl_go"],
+)
+
+go_binary(
+    name = "decode_progressive",
+    srcs = ["cmd/decode_progressive.go"],
+    deps = [":libjxl_go"],
+)
+
+go_binary(
+    name = "decode_exif_metadata",
+    srcs = ["cmd/decode_exif_metadata.go"],
+    deps = [":libjxl_go"],
+)
+
+go_test(
+    name = "libjxl_test",
+    srcs = [
+        "advanced_test.go",
+        "libjxl_test.go",
+    ],
+    deps = [":libjxl_go"],
+)

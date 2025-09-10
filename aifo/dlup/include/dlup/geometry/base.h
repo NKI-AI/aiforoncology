@@ -32,8 +32,8 @@ using BoostPoint = bg::model::d2::point_xy<double>;
 using BoostPolygon = bg::model::polygon<BoostPoint>;
 using BoostRing = bg::model::ring<BoostPoint>;
 
-using FieldType =
-    std::variant<int, std::tuple<int, int, int>, std::string, bool>;
+using FieldType = std::variant<std::monostate, int, std::tuple<int, int>,
+                               std::tuple<int, int, int>, std::string, bool>;
 
 namespace dlup::geometry {
 

@@ -67,6 +67,7 @@ func mapDatasetToPatient(dataset *dicom.Dataset) (*models.Patient, error) {
 
 	return model, nil
 }
+
 func mapDatasetToStudy(dataset *dicom.Dataset) (*models.Study, error) {
 	model := &models.Study{}
 
@@ -212,6 +213,7 @@ func mapDatasetToStudy(dataset *dicom.Dataset) (*models.Study, error) {
 
 	return model, nil
 }
+
 func mapDatasetToSeries(dataset *dicom.Dataset) (*models.Series, error) {
 	model := &models.Series{}
 
@@ -539,6 +541,7 @@ func mapDatasetToSeries(dataset *dicom.Dataset) (*models.Series, error) {
 
 	return model, nil
 }
+
 func mapDatasetToInstance(dataset *dicom.Dataset) (*models.Instance, error) {
 	model := &models.Instance{}
 
@@ -836,6 +839,7 @@ func mapDatasetToInstance(dataset *dicom.Dataset) (*models.Instance, error) {
 
 	return model, nil
 }
+
 func mapDatasetToMRISpecifics(dataset *dicom.Dataset) (*models.MRISpecifics, error) {
 	model := &models.MRISpecifics{}
 

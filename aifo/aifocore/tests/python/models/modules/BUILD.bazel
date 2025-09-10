@@ -1,0 +1,50 @@
+load("@aspect_rules_py//py:defs.bzl", "py_test")
+load("@pip//:requirements.bzl", "requirement")
+
+py_test(
+    name = "drop_path_test",
+    srcs = [
+        "drop_path_test.py",
+    ],
+    pytest_main = True,
+    deps = [
+        "//aifo/aifocore:aifocore_models",
+        requirement("pytest"),
+    ],
+)
+
+py_test(
+    name = "patch_merging_test",
+    srcs = [
+        "patch_merging_test.py",
+    ],
+    pytest_main = True,
+    deps = [
+        "//aifo/aifocore:aifocore_models",
+        requirement("pytest"),
+    ],
+)
+
+py_test(
+    name = "window_attention_2d_test",
+    srcs = [
+        "window_attention_2d_test.py",
+    ],
+    pytest_main = True,
+    deps = [
+        "//aifo/aifocore:aifocore_models",
+        requirement("pytest"),
+    ],
+)
+
+py_test(
+    name = "window_attention_3d_test",
+    srcs = [
+        "window_attention_3d_test.py",
+    ],
+    pytest_main = True,
+    deps = [
+        "//aifo/aifocore:aifocore_models",
+        requirement("pytest"),
+    ],
+)

@@ -1,0 +1,39 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+# Common utilities for examples
+cc_library(
+    name = "example_utils",
+    srcs = ["utils/example_utils.cpp"],
+    hdrs = ["utils/example_utils.h"],
+    deps = [
+        "//aifo/fastslide:readers",
+        "//third_party/CLI11",
+        "@libvips//:libvips-cpp",
+    ],
+)
+
+cc_binary(
+    name = "spectral_example",
+    srcs = ["spectral_example.cpp"],
+    deps = [
+        ":example_utils",
+        "//aifo/aifocore:status",
+        "//aifo/fastslide:fastslide_lib",
+        "//aifo/fastslide:resample",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_binary(
+    name = "spectral_example_average",
+    srcs = ["spectral_example_average.cpp"],
+    deps = [
+        ":example_utils",
+        "//aifo/aifocore:status",
+        "//aifo/fastslide:fastslide_lib",
+        "//aifo/fastslide:resample",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)

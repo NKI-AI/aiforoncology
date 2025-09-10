@@ -13,5 +13,8 @@
 # limitations under the License.
 import runpy
 
+# This import is done to register single dispatch functions registered within the logging module.
+import fef.utils.logging  # noqa: F401
+
 if __name__ == "__main__":
     runpy.run_module("eva", run_name="__main__", alter_sys=True)

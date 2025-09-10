@@ -1,7 +1,7 @@
 _target_: ahcore.utils.data.DataDescription
-data_dir: ${oc.env:DATA_DIR}
-annotations_dir: ${oc.env:ANNOTATIONS_DIR}
-manifest_database_uri: ${oc.env:DATABASE_URI}
+data_dir: ${oc.env:DATA_DIR, ${hydra:runtime.cwd}/data}
+annotations_dir: ${oc.env:ANNOTATIONS_DIR, ${hydra:runtime.cwd}/data/annotations}
+manifest_database_uri: ${oc.env:DATABASE_URI, ${hydra:runtime.cwd}/data/manifest.db}
 manifest_name: "v1.0"
 split_version: "v1.0"
 use_roi: False # This can be inferenced from the SlideAnnotations. If they have a ROI it should be used. Perhaps explicit is also good

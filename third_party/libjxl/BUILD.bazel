@@ -1,0 +1,56 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# Main JPEG XL library (decoder and encoder)
+cc_library(
+    name = "libjxl",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:jpegxl"],
+)
+
+# JPEG XL with extras (additional codec support)
+# Includes support for APNG, EXR, GIF, JPEG, PNG codecs
+cc_library(
+    name = "libjxl_extras",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:jpegxl_extras"],
+)
+
+# Threading support for JPEG XL
+cc_library(
+    name = "libjxl_threads",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:jpegxl_threads"],
+)
+
+# Jpegli - JPEG implementation based on JPEG XL
+cc_library(
+    name = "jpegli",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:jpegli"],
+)
+
+# Base utilities and headers
+cc_library(
+    name = "libjxl_base",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:base"],
+)
+
+# Public headers only
+cc_library(
+    name = "libjxl_includes",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:includes"],
+)
+
+# Test utilities (testonly)
+cc_library(
+    name = "libjxl_test_utils",
+    testonly = True,
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/libjxl/upstream/libjxl/lib:test_utils"],
+)

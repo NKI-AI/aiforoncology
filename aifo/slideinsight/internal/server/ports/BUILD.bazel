@@ -1,0 +1,32 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "ports",
+    srcs = [
+        "algorithms.go",
+        "cases.go",
+        "common.go",
+        "db.go",
+        "email.go",
+        "email_templates.go",
+        "image_types.go",
+        "notifications.go",
+        "raster_annotations.go",
+        "rbac.go",
+        "regions.go",
+        "settings.go",
+        "slides.go",
+        "studies.go",
+        "tenants.go",
+        "users.go",
+        "vector_annotations.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/ports",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/utils",
+        "@com_github_mattn_go_sqlite3//:go-sqlite3",
+        "@com_github_stretchr_testify//mock",
+    ],
+)

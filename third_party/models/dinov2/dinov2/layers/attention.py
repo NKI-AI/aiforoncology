@@ -10,8 +10,10 @@
 import logging
 import os
 import warnings
+from typing import Optional
 
-from torch import Tensor, nn
+import torch
+from torch import nn
 
 logger = logging.getLogger("dinov2")
 
@@ -32,6 +34,29 @@ except ImportError:
 
 
 class Attention(nn.Module):
+    """Multi-head self-attention module.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the input features.
+    num_heads : int, optional
+        Number of attention heads, by default 8.
+    qkv_bias : bool, optional
+        Whether to add a bias to the query, key, and value projections, by default False.
+    proj_bias : bool, optional
+        Whether to add a bias to the output projection, by default True.
+    attn_drop : float, optional
+        Dropout rate for the attention weights, by default 0.0.
+    proj_drop : float, optional
+        Dropout rate for the output projection, by default 0.0.
+
+    Raises
+    ------
+    ValueError
+        If `dim` is not divisible by `num_heads`.
+    """
+
     def __init__(
         self,
         dim: int,
@@ -41,7 +66,31 @@ class Attention(nn.Module):
         attn_drop: float = 0.0,
         proj_drop: float = 0.0,
     ) -> None:
+        """Inits :class:`Attention`.
+
+        Parameters
+        ----------
+        dim : int
+            Dimension of the input features.
+        num_heads : int, optional
+            Number of attention heads, by default 8.
+        qkv_bias : bool, optional
+            Whether to add a bias to the query, key, and value projections, by default False.
+        proj_bias : bool, optional
+            Whether to add a bias to the output projection, by default True.
+        attn_drop : float, optional
+            Dropout rate for the attention weights, by default 0.0.
+        proj_drop : float, optional
+            Dropout rate for the output projection, by default 0.0.
+
+        Raises
+        ------
+        ValueError
+            If `dim` is not divisible by `num_heads`.
+        """
         super().__init__()
+        if dim % num_heads != 0:
+            raise ValueError(f"dim {dim} should be divisible by num_heads {num_heads}.")
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = head_dim**-0.5
@@ -51,7 +100,20 @@ class Attention(nn.Module):
         self.proj = nn.Linear(dim, dim, bias=proj_bias)
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass of :class:`Attention`.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape (B, N, C) where B is the batch size, N is the sequence length, and C is
+            the feature dimension.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor of shape (B, N, C) after applying multi-head self-attention.
+        """
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
 
@@ -68,7 +130,50 @@ class Attention(nn.Module):
 
 
 class MemEffAttention(Attention):
-    def forward(self, x: Tensor, attn_bias=None) -> Tensor:
+    """Memory-efficient multi-head self-attention module using xFormers.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the input features.
+    num_heads : int, optional
+        Number of attention heads, by default 8.
+    qkv_bias : bool, optional
+        Whether to add a bias to the query, key, and value projections, by default False.
+    proj_bias : bool, optional
+        Whether to add a bias to the output projection, by default True.
+    attn_drop : float, optional
+        Dropout rate for the attention weights, by default 0.0.
+    proj_drop : float, optional
+        Dropout rate for the output projection, by default 0.0.
+
+    Raises
+    ------
+    ValueError
+        If `dim` is not divisible by `num_heads`.
+    """
+
+    def forward(self, x: torch.Tensor, attn_bias: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Forward pass of :class:`MemEffAttention`.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape (B, N, C) where B is the batch size, N is the sequence length, and C is
+            the feature dimension.
+        attn_bias : Optional[torch.Tensor], optional
+            Attention bias tensor for memory-efficient attention, by default None.
+
+        Raises
+        ------
+        AssertionError
+            If xFormers is not available and `attn_bias` is provided.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor of shape (B, N, C) after applying memory-efficient multi-head self-attention.
+        """
         if not XFORMERS_AVAILABLE:
             if attn_bias is not None:
                 raise AssertionError("xFormers is required for using nested tensors")

@@ -26,6 +26,10 @@ exclude = [
     "node_modules",
     "site-packages",
     "venv",
+    "third_party/openslide_python",
+    "third_party/pyvips",
+    "third_party/xtensor_python",
+    "third_party/libjxl",
 ]
 
 # Same as Black.

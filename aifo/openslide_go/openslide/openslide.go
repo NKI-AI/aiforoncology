@@ -166,10 +166,13 @@ func (s Slide) BestLevelForDownsample(downsample float64) (int, error) {
 	return val, nil
 }
 
-// ReadRegion reads a region at the specified level and location.
-func (s Slide) ReadRegion(x, y, level, w, h int) (image.Image, error) {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	pixPtr := unsafe.Pointer(&img.Pix[0])
+// ReadRegion reads a region at the specified level and location, returning raw RGBA bytes.
+// This is useful when you need direct access to pixel data without the overhead of creating an image.Image.
+func (s Slide) ReadRegion(x, y, level, w, h int) ([]byte, error) {
+	// Allocate buffer for RGBA data (4 bytes per pixel)
+	pixelCount := w * h
+	buffer := make([]byte, pixelCount*4)
+	pixPtr := unsafe.Pointer(&buffer[0])
 
 	C.openslide_read_region(
 		s.ptr,
@@ -183,7 +186,22 @@ func (s Slide) ReadRegion(x, y, level, w, h int) (image.Image, error) {
 		return nil, errors.New(C.GoString(errPtr))
 	}
 
-	C.ArgbToRgba((*C.uint32_t)(pixPtr), C.size_t(w*h))
+	// Convert from ARGB to RGBA format
+	C.ArgbToRgba((*C.uint32_t)(pixPtr), C.size_t(pixelCount))
+	return buffer, nil
+}
+
+// RegionToImage converts raw RGBA bytes to an image.Image.
+// The bytes should be in RGBA format with 4 bytes per pixel.
+func RegionToImage(data []byte, w, h int) (image.Image, error) {
+	expectedSize := w * h * 4
+	if len(data) != expectedSize {
+		return nil, fmt.Errorf("invalid data size: expected %d bytes for %dx%d image, got %d",
+			expectedSize, w, h, len(data))
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	copy(img.Pix, data)
 	return img, nil
 }
 
@@ -357,7 +375,13 @@ func (s Slide) Thumbnail(size int) (image.Image, error) {
 
 	srcW, srcH := levelDims[0], levelDims[1]
 
-	img, err := s.ReadRegion(0, 0, level, srcW, srcH)
+	imgData, err := s.ReadRegion(0, 0, level, srcW, srcH)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert raw RGBA bytes to image.Image
+	img, err := RegionToImage(imgData, srcW, srcH)
 	if err != nil {
 		return nil, err
 	}

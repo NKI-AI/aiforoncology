@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import cv2
 import matplotlib.pyplot as plt
@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import minmax_scale
 from torch import nn
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def load_dino_model(
@@ -22,21 +22,28 @@ def load_dino_model(
     config_name: str = "eval/vits14_pretrain",
     image_size: int = 224,
 ) -> nn.Module:
-    """
-    Load a DINO model from the given model name and configuration path.
+    """Load a DINO model from the given model name and configuration path.
 
-    Parameters:
-    - model_path: Path to the pretrained model.
-    - config_name: Name of the configuration file.
-    - image_size: input size of the images.
+    Parameters
+    ----------
+    model_path : str or Path
+        Path to the pretrained model.
+    config_name : str
+        Name of the configuration file.
+    image_size : int
+        Input size of the images.
 
-    Returns:
-    - number of iterations, The pretrained model.
+    Returns
+    -------
+    tuple[int, nn.Module]
+        A tuple containing:
+            - number of iterations
+            - The pretrained model.
     """
     if re.search(r"training_(\d+)", model_path) is not None:
         iterations = int(re.search(r"training_(\d+)", model_path).group(1))
     else:
-        log.warning("No iteration number found in the model path. Using -1 as the iteration number.")
+        logger.warning("No iteration number found in the model path. Using -1 as the iteration number.")
         iterations = -1
     conf = load_and_merge_config(config_name)
     conf.crops.global_crops_size = image_size
@@ -45,17 +52,25 @@ def load_dino_model(
 
 
 def load_and_preprocess_images(
-    image_paths: List[str], size: Tuple[int, int] = (224, 224), channels: int = 3
-) -> Tuple[List[np.ndarray], torch.Tensor]:
-    """
-    Load and preprocess images for model evaluation.
+    image_paths: list[str], size: tuple[int, int] = (224, 224), channels: int = 3
+) -> tuple[list[np.ndarray], torch.Tensor]:
+    """Load and preprocess images for model evaluation.
 
-    Parameters:
-    - image_paths: List of paths to the images.
-    - size: Desired size of the images as a tuple (width, height).
+    Parameters
+    ----------
+    image_paths : list[str]
+        List of paths to the images.
+    size : tuple[int, int]
+        Desired size of the images as a tuple (width, height).
+    channels : int
+        Number of channels in the output images (1 for grayscale, 3 for RGB).
 
-    Returns:
-    - A torch.Tensor of preprocessed images.
+    Returns
+    -------
+    tuple[list[np.ndarray], torch.Tensor]
+        A tuple containing:
+            - List of original images as numpy arrays
+            - Preprocessed images as a torch tensor
     """
     images = []
     for path in image_paths:
@@ -82,16 +97,22 @@ def load_and_preprocess_images(
     return images, transform(input_tensor)
 
 
-def evaluate_model(model: torch.nn.Module, input_tensor: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Evaluate the model on the given input tensor and return features necessary for PCA analysis.
+def evaluate_model(model: torch.nn.Module, input_tensor: torch.Tensor) -> tuple[np.ndarray, np.ndarray]:
+    """Evaluate the model on the given input tensor and return features necessary for PCA analysis.
 
-    Parameters:
-    - model: The pretrained model to evaluate.
-    - input_tensor: The preprocessed input tensor.
+    Parameters
+    ----------
+    model : torch.nn.Module
+        The pretrained model to evaluate.
+    input_tensor : torch.Tensor
+        The preprocessed input tensor.
 
-    Returns:
-    - Tuple of numpy arrays: (output_cls, output_patch)
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        A tuple containing:
+            - output_cls: Class token features from the model.
+            - output_patch: Patch token features from the model.
     """
     output = model.forward_features(input_tensor)
     output_cls = output["x_norm_clstoken"].cpu().detach().numpy()
@@ -100,19 +121,23 @@ def evaluate_model(model: torch.nn.Module, input_tensor: torch.Tensor) -> Tuple[
 
 
 def perform_pca_and_plot_old(
-    images: List[np.ndarray],
+    images: list[np.ndarray],
     output_patch: np.ndarray,
     save_path: str,
     plot_title: str | None = None,
 ) -> None:
-    """
-    Perform PCA analysis on the model outputs and generate plots, saving them to a specified path.
+    """Perform PCA analysis on the model outputs and generate plots, saving them to a specified path.
 
-    Parameters:
-    - images: List of original images.
-    - output_patch: Model output patches for PCA analysis.
-    - save_path: Path to save the plot.
-    - threshold: Threshold for masking in PCA analysis.
+    Parameters
+    ----------
+    images : list[np.ndarray]
+        List of original images.
+    output_patch : np.ndarray
+        Model output patches for PCA analysis.
+    save_path : str
+        Path to save the plot.
+    plot_title : str or None, optional
+        Title for the plot, by default None.
     """
     num_images = len(images)
     embedding_size = output_patch.shape[-1]
@@ -139,16 +164,20 @@ def perform_pca_and_plot_old(
     plt.close()
 
 
-def compute_foreground_masks(output_patch: np.ndarray, threshold: float = 0.0) -> List[np.ndarray]:
-    """
-    Computes foreground masks for each image using PCA.
+def compute_foreground_masks(output_patch: np.ndarray, threshold: float = 0.0) -> list[np.ndarray]:
+    """Compute foreground masks for each image using PCA.
 
-    Parameters:
-    - output_patch: Model output patches for PCA analysis.
-    - threshold: Threshold for masking in PCA analysis.
+    Parameters
+    ----------
+    output_patch : np.ndarray
+        Model output patches for PCA analysis.
+    threshold : float, optional
+        Threshold for masking in PCA analysis, by default 0.0.
 
-    Returns:
-    - masks: List of boolean arrays indicating foreground patches for each image.
+    Returns
+    -------
+    list[np.ndarray]
+        List of boolean arrays indicating foreground patches for each image.
     """
     num_images = output_patch.shape[0]
     embedding_size = output_patch.shape[-1]
@@ -172,18 +201,23 @@ def compute_foreground_masks(output_patch: np.ndarray, threshold: float = 0.0) -
 
 
 def perform_pca_on_foreground_patches(
-    output_patch: np.ndarray, masks: List[np.ndarray]
-) -> Tuple[np.ndarray, List[int]]:
-    """
-    Performs PCA on the foreground patches and returns the reduced patches and mask indices.
+    output_patch: np.ndarray, masks: list[np.ndarray]
+) -> tuple[np.ndarray, list[int]]:
+    """Perform PCA on the foreground patches and return the reduced patches and mask indices.
 
-    Parameters:
-    - output_patch: Model output patches.
-    - masks: List of masks indicating foreground patches for each image.
+    Parameters
+    ----------
+    output_patch : np.ndarray
+        Model output patches.
+    masks : list[np.ndarray]
+        List of masks indicating foreground patches for each image.
 
-    Returns:
-    - reduced_patches: PCA-reduced patches of foreground regions.
-    - mask_indices: List of starting indices for the patches of each image in reduced_patches.
+    Returns
+    -------
+    tuple[np.ndarray, list[int]]
+        A tuple containing:
+            - reduced_patches: PCA-reduced patches of foreground regions.
+            - mask_indices: List of starting indices for the patches of each image in reduced_patches.
     """
     object_pca = PCA(n_components=3)
 
@@ -203,22 +237,26 @@ def perform_pca_on_foreground_patches(
 
 
 def perform_pca_and_plot(
-    images: List[np.ndarray],
+    images: list[np.ndarray],
     output_patch: np.ndarray,
     save_path: str,
     plot_title: Optional[str] = None,
     threshold: float = 0.0,
 ) -> None:
-    """
-    Perform PCA analysis on the model outputs focusing on foreground patches and generate plots,
-    saving them to a specified path.
+    """Perform PCA analysis on the model outputs focusing on foreground patches and generate plots.
 
-    Parameters:
-    - images: List of original images.
-    - output_patch: Model output patches for PCA analysis.
-    - save_path: Path to save the plot.
-    - plot_title: Title for the plot.
-    - threshold: Threshold for masking in PCA analysis.
+    Parameters
+    ----------
+    images : list[np.ndarray]
+        List of original images.
+    output_patch : np.ndarray
+        Model output patches for PCA analysis.
+    save_path : str
+        Path to save the plot.
+    plot_title : Optional[str], optional
+        Title for the plot, by default None.
+    threshold : float, optional
+        Threshold for masking in PCA analysis, by default 0.0.
     """
     num_images = len(images)
 

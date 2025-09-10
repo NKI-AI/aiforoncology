@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "email",
+    srcs = [
+        "async_email.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/email",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/queue",
+        "//aifo/slideinsight/internal/server/ports",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)

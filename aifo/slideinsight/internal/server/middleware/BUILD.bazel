@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "middleware",
+    srcs = [
+        "auth.go",
+        "errors.go",
+        "permissions.go",
+        "principal.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/middleware",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/config",
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/errors",
+        "//aifo/slideinsight/internal/server/ports",
+        "@com_github_gofiber_fiber_v2//:fiber",
+        "@com_github_gofiber_fiber_v2//log",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+        "@org_uber_go_zap//:zap",
+    ],
+)

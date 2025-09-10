@@ -1,4 +1,5 @@
 // Copyright 2024 Jonas Teuwen. All Rights Reserved.
+// Copyright 2025 Jonas Teuwen & Joren Brunekreef. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -256,7 +257,7 @@ class ImageReader : public dlup::backends::AbstractSlideBackend {
   void ComputeParameters() {
     try {
       this->geometry_ = this->GetMetadata()->GetGeometry();
-      this->actual_size_ = this->geometry_.offset + this->geometry_.bounds;
+      this->actual_size_ = this->geometry_.bounds;
       this->tile_size_ = this->GetMetadata()->GetTileSize();
       this->tile_overlap_ = this->GetMetadata()->GetTileOverlap();
       this->mpp_ = this->GetMetadata()->GetMpp();
@@ -378,7 +379,6 @@ class ImageReader : public dlup::backends::AbstractSlideBackend {
               .cast(GetOutputPixelFormat());
 
       return black_image;
-      // return black_image.colourspace(GetOutputInterpretation());
     }
 
     // If we're partially out of bounds,
@@ -391,8 +391,6 @@ class ImageReader : public dlup::backends::AbstractSlideBackend {
               size[0], size[1],
               vips::VImage::option()->set("bands", GetNumOutputChannels()))
               .cast(GetOutputPixelFormat());
-      // black = black.colourspace(GetOutputInterpretation())
-      //            ;
 
       // Calculate the valid region coordinates
       int valid_x = std::max(0, coordinates[0]);
@@ -444,15 +442,13 @@ vips::VImage ImageReader::StitchTiles(const Size<int, 2>& location,
           width, height,
           vips::VImage::option()->set("bands", GetNumInputChannels()))
           .cast(GetOutputPixelFormat());
-  // stitched_image = stitched_image.colourspace(GetOutputInterpretation())
-  //                      ;
 
   vips::VImage count_mask = (stitching_mode_ == StitchingMode::kAverage)
                                 ? vips::VImage::black(width, height)
                                 : vips::VImage();
 
-  int start_col = x / stride_[0];
-  int start_row = y / stride_[1];
+  int start_col = std::min(x / stride_[0], num_cols_ - 1);
+  int start_row = std::min(y / stride_[1], num_rows_ - 1);
   int end_row = std::min((y + height - 1) / stride_[1] + 1, num_rows_);
   int end_col = std::min((x + width - 1) / stride_[0] + 1, num_cols_);
 

@@ -176,9 +176,15 @@ func TestReadRegion(t *testing.T) {
 	level := 6
 	width, height := 400, 400
 
-	region, err := slide.ReadRegion(x, y, level, width, height)
+	regionData, err := slide.ReadRegion(x, y, level, width, height)
 	if err != nil {
 		t.Fatalf("Failed to read region: %v", err)
+	}
+
+	// Convert raw RGBA bytes to image.Image
+	region, err := RegionToImage(regionData, width, height)
+	if err != nil {
+		t.Fatalf("Failed to convert region data to image: %v", err)
 	}
 
 	// Verify the region dimensions

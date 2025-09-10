@@ -10,6 +10,7 @@ necessary for clang-tidy to find the files.
 Example usage:
     python filter_compile_commands.py --input compile_commands.json --changed-files file1.cc file2.h
 """
+
 import os
 import argparse
 import json
@@ -35,7 +36,6 @@ def filter_compile_commands(changed_files: Sequence[str], input_path: pathlib.Pa
 
     with open(input_path, "w", encoding="utf-8") as f:
         json.dump(filtered_commands, f)
-
 
 
 def main() -> None:

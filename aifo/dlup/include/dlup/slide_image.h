@@ -1,4 +1,4 @@
-// Copyright 2024 Jonas Teuwen. All Rights Reserved.
+// Copyright 2025 Jonas Teuwen & Joren Brunekreef. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,9 +50,9 @@ enum class Resampling { kNearest, kLanczos };
                                             : VIPS_KERNEL_LANCZOS3;
 }
 
-absl::Status CheckSizeAndLocation(const Size<double, 2>& size,
-                                  const Size<double, 2>& location,
-                                  const Size<int, 2>& level_size) {
+inline absl::Status CheckSizeAndLocation(const Size<double, 2>& size,
+                                         const Size<double, 2>& location,
+                                         const Size<int, 2>& level_size) {
   if (size[0] <= 0 || size[1] <= 0) {
     return MAKE_STATUS(absl::StatusCode::kInvalidArgument,
                        "Size values must be greater than zero.");

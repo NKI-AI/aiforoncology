@@ -1,6 +1,0 @@
-# SlideScope Import Configuration
-# This file defines slides and masks to be imported
-# Example with a single mask
-- image_name: "Slide 1"
-  image_path: "image.svs"
-  mask_path: "mask.tiff" # This can also be a list of masks

@@ -239,7 +239,8 @@ class FileImageReader(abc.ABC):
                 tile_index_in_image_dataset = int(tile_indices[tile_idx])
 
                 if tile_index_in_image_dataset == -1:
-                    tile = self._empty_tile()
+                    logger.warning(f"Tile {tile_idx} is not present in the image dataset. Skipping.")
+                    continue
                 else:
                     tile = self._decompress_and_reshape_data(image_dataset[tile_index_in_image_dataset])
 

@@ -6,6 +6,7 @@
 import os
 from functools import partial
 from typing import Any
+from typing_extensions import override
 
 import dinov2.distributed as distributed
 import torch
@@ -107,6 +108,10 @@ class FSDPCheckpointer(Checkpointer):
         with self.path_manager.open(save_file, "wb") as f:
             torch.save(data, f)
         self.tag_last_checkpoint(basename)
+
+    @override
+    def _load_file(self, f: str) -> distributed.Dict[str, Any]:
+        return torch.load(f, map_location=torch.device("cpu"), weights_only=False)
 
     def load(self, *args, **kwargs):
         with FSDP.state_dict_type(self.model, StateDictType.LOCAL_STATE_DICT):

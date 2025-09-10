@@ -148,7 +148,6 @@ func (importer *DICOMFilesImporter) walkFiles() {
 
 		return nil
 	})
-
 	if err != nil {
 		log.Printf("Error walking the path %q: %v\n", importer.DicomDir, err)
 	}

@@ -100,7 +100,7 @@ func main() {
 							}
 
 							var datetimeInfo DateTimeFieldInfo
-							var valid = true
+							valid := true
 
 							// Find and validate date field
 							dateFieldName := datetimeParts[0]

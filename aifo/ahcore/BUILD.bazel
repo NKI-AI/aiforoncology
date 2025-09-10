@@ -29,10 +29,16 @@ cc_library(
 
 cc_library(
     name = "utilities-torch",
+    srcs = ["src/utilities/torch.cpp"],
     hdrs = ["include/ahcore/utilities/torch.h"],
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],
-    deps = ["@libvips"] + select({
+    deps = [
+        "//aifo/aifocore:status",
+        "//aifo/aifocore:utilities-fmt",
+        "@libvips",
+        "@libvips//:libvips-cpp",
+    ] + select({
         "@platforms//os:linux": [
             "@libtorch_linux//:libtorch",
             "@rules_cuda//cuda:runtime",
@@ -75,11 +81,11 @@ pybind_extension(
 cc_library(
     name = "pathology-configuration",
     srcs = [
-        "src/pathology/config/process_config.cpp",
+        "src/pathology/config/inference_config.cpp",
         "src/pathology/configuration.cpp",
     ],
     hdrs = [
-        "include/ahcore/pathology/config/process_config.h",
+        "include/ahcore/pathology/config/inference_config.h",
         "include/ahcore/pathology/configuration.h",
     ],
     strip_include_prefix = "include",
@@ -114,39 +120,6 @@ cc_library(
     ],
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "inference",
-    srcs = [
-        "src/pathology/inference.cpp",
-    ],
-    copts = select({
-        "@platforms//os:linux": ["-DWITH_CUDA"],
-        "//conditions:default": [],
-    }),
-    deps = [
-        ":data",
-        ":pathology-configuration",
-        ":pathology-transforms",
-        ":pathology-visualization",
-        "//aifo/aifocore:concepts",
-        "//aifo/aifocore:status",
-        "//aifo/dlup:foreground",
-        "//aifo/dlup:utilities",
-        "@abseil-cpp//absl/status:status",
-        "@abseil-cpp//absl/status:statusor",
-        "@libvips//:libvips-cpp",
-        "@libxml2",
-        "@spdlog",
-    ] + select({
-        "@platforms//os:linux": [
-            "@libtorch_linux//:libtorch",
-            "@rules_cuda//cuda:runtime",
-        ],
-        "@platforms//os:macos": ["@libtorch_macos//:libtorch"],
-        "//conditions:default": [],
-    }),
 )
 
 filegroup(
@@ -212,5 +185,53 @@ py_binary(
         requirement("timm"),
         requirement("torch"),
         requirement("transformers"),
+    ],
+)
+
+cc_library(
+    name = "inference_engine",
+    srcs = [
+        "src/pathology/inference_engine.cpp",
+    ],
+    hdrs = [
+        "include/ahcore/pathology/inference_engine.h",
+    ],
+    copts = select({
+        "@platforms//os:linux": ["-DWITH_CUDA"],
+        "//conditions:default": [],
+    }),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":data",
+        ":pathology-configuration",
+        ":pathology-transforms",
+        ":pathology-visualization",
+        ":utilities-torch",
+        "//aifo/aifocore:tiling",
+        "//aifo/aifocore:utilities-zip",
+        "//aifo/dlup:foreground",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@libvips//:libvips-cpp",
+        "@libxml2",
+        "@spdlog",
+    ] + select({
+        "@platforms//os:linux": [
+            "@libtorch_linux//:libtorch",
+            "@rules_cuda//cuda:runtime",
+        ],
+        "@platforms//os:macos": ["@libtorch_macos//:libtorch"],
+        "//conditions:default": [],
+    }),
+)
+
+py_binary(
+    name = "jit_model",
+    srcs = ["ahcore/jit_model.py"],
+    data = ["ahcore/config"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/ahcore",
     ],
 )

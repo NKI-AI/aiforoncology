@@ -1,0 +1,120 @@
+load("@aspect_rules_swc//swc:defs.bzl", "swc")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@bazel_skylib//lib:partial.bzl", "partial")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//aifo/slideinsight/ui:vite/package_json.bzl", vite_bin = "bin")
+load("@rules_go//go:def.bzl", "go_library")
+
+npm_link_all_packages(name = "node_modules")
+
+filegroup(
+    name = "vite_configs",
+    srcs = [
+        "index.html",
+        "package.json",
+        "postcss.config.cjs",
+        "vite.config.mjs",
+    ],
+    visibility = [":__subpackages__"],
+)
+
+SRCS = ["//aifo/slideinsight/ui/src"]
+
+TYPED_BUILD_DEPS = [":node_modules/" + d for d in [
+    "@types/react",
+    "@types/react-dom",
+    "@types/node",
+    "@radix-ui/react-alert-dialog",
+    "@radix-ui/react-checkbox",
+    "@radix-ui/react-collapsible",
+    "@radix-ui/react-dialog",
+    "@radix-ui/react-dropdown-menu",
+    "@radix-ui/react-label",
+    "@radix-ui/react-select",
+    "@radix-ui/react-separator",
+    "@radix-ui/react-slot",
+    "@radix-ui/react-switch",
+    "@radix-ui/react-tabs",
+    "@radix-ui/react-tooltip",
+    "@radix-ui/react-popover",
+    "react",
+    "react-dom",
+    "@uiw/react-color",
+    "ol",
+    "ol-ext",
+    "framer-motion",
+    "react-resizable-panels",
+    "@vitejs/plugin-react",
+    "vite-plugin-css-injected-by-js",
+    "@tanstack/react-form",
+    "@tanstack/react-query",
+    "@heroicons/react",
+    "lucide-react",
+    "vite",
+    "sonner",
+    "class-variance-authority",
+    "recharts",
+    "tailwind-merge",
+    "clsx",
+    "jsts",
+    "@tabler/icons-react",
+    "typescript",
+    "@tailwindcss/vite",
+    "tailwindcss",
+    "autoprefixer",
+    "@tanstack/react-table",
+    "@tanstack/react-router",
+    "@tanstack/router-devtools",
+    "@tanstack/react-query-devtools",
+    "@tanstack/router-vite-plugin",
+]]
+
+ts_project(
+    name = "ui",
+    srcs = SRCS,
+    declaration = True,
+    declaration_map = True,
+    resolve_json_module = True,
+    transpiler = partial.make(
+        swc,
+        swcrc = ".swcrc",
+    ),
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = TYPED_BUILD_DEPS,
+)
+
+vite_bin.vite_binary(
+    name = "vite",
+    chdir = package_name(),
+    copy_data_to_bin = False,
+)
+
+vite_bin.vite(
+    name = "build",
+    srcs = [
+        "index.html",
+        ":ui",
+        ":vite_configs",
+        "//aifo/slideinsight/ui/src",
+        "//aifo/slideinsight/ui/src/features/viewer/components/map/libjxl:libjxl_bin",
+    ],
+    args = ["build"],
+    chdir = package_name(),
+    env = select({
+        "//conditions:default": {
+            "NODE_ENV": "development",
+        },
+    }) | {
+        "NODE_ENV": "production",
+    },
+    out_dirs = ["dist"],
+)
+
+go_library(
+    name = "ui_lib",
+    srcs = ["ui.go"],
+    embedsrcs = [":build"],
+    importpath = "aifo.dev/aifo/slideinsight/ui",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_gofiber_fiber_v2//middleware/filesystem"],
+)

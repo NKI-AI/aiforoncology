@@ -1,5 +1,18 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary")
 
+genrule(
+    name = "generate_env",
+    srcs = [".env.example"],
+    outs = [".env"],
+    cmd = """
+        if [ ! -f $(location .env) ]; then
+            cp $(location .env.example) $(location .env)
+        fi
+        touch $(location .env)
+    """,
+    message = "Ensuring .env file exists from .env.example if missing.",
+)
+
 py_binary(
     name = "convert_halo_annotations_to_dlup_xml",
     srcs = ["convert_halo_annotations_to_dlup_xml.py"],
@@ -16,8 +29,8 @@ py_binary(
     name = "train",
     srcs = ["train.py"],
     data = [
-        ".env",
         "additional_config",
+        ":generate_env",
     ],
     env = {
         "HYDRA_FULL_ERROR": "1",

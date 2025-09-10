@@ -211,3 +211,34 @@ def test_chunk_size():
     manager.append(arr.reshape(4))
     assert manager.get_chunk_shape(1) == (4,)
     remove_shared_memory(memory_name)
+
+
+def test_shared_vector_size_is_set_correctly_upon_init():
+    # arrange
+    memory_name = "shared_memory_size_test"
+    remove_shared_memory(memory_name)
+    producer = SharedVector(memory_name, max_memory_size=MAX_MEMORY_SIZE, chunk_size=10 * 10 * 10)
+
+    # act
+    for _ in range(10):
+        producer.append(np.random.random((5, 5)).astype(np.float32))
+
+    # assert
+    consumer = SharedVector(memory_name, max_memory_size=MAX_MEMORY_SIZE, chunk_size=10 * 10 * 10)
+    assert consumer.size() == 10
+
+
+def test_shared_vector_size_changed_after_append():
+    # arrange
+    memory_name = "shared_memory_size_test"
+    remove_shared_memory(memory_name)
+    producer = SharedVector(memory_name, max_memory_size=MAX_MEMORY_SIZE, chunk_size=10 * 10 * 10)
+    consumer = SharedVector(memory_name, max_memory_size=MAX_MEMORY_SIZE, chunk_size=10 * 10 * 10)
+    assert consumer.size() == 0
+
+    # act
+    for _ in range(5):
+        producer.append(np.random.random((5, 5)).astype(np.float32))
+
+    # assert
+    assert consumer.size() == 5

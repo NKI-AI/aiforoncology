@@ -1,0 +1,16 @@
+load("@pip//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_library")
+
+py_library(
+    name = "slideinsight_sdk",
+    srcs = glob(["slideinsight_sdk/**/*.py"]),
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+alias(
+    name = "cli",
+    actual = "//aifo/slideinsight_api/slideinsight_cli:slideinsight_cli",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,14 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary")
+load("@pip//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+py_binary(
+    name = "python_usage",
+    srcs = ["python_usage.py"],
+    deps = [
+        "//aifo/fastslide:fastslide_python",
+        requirement("Pillow"),
+        requirement("numpy"),
+    ],
+)

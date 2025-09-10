@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "annotations",
+    srcs = [
+        "adapter.go",
+        "queries.go",
+        "raster_crud.go",
+        "raster_search.go",
+        "raster_soft_delete.go",
+        "vector_crud.go",
+        "vector_search.go",
+        "vector_soft_delete.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/datasources/database/sqlite/annotations",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/domain",
+        "//aifo/slideinsight/internal/server/errors",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/utils",
+        "@com_github_gofiber_fiber_v2//log",
+    ],
+)

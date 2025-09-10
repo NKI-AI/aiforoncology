@@ -1,0 +1,65 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+cc_test(
+    name = "image_test",
+    size = "small",
+    srcs = ["image_test.cpp"],
+    deps = [
+        "//aifo/fastslide:image",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "cache_test",
+    size = "small",
+    srcs = ["utilities/cache_test.cpp"],
+    deps = [
+        "//aifo/fastslide:cache",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "tiff_pool_test",
+    size = "small",
+    srcs = ["utilities/tiff/tiff_pool_test.cpp"],
+    deps = [
+        "//aifo/fastslide:tiff_utilities",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@libtiff",
+    ],
+)
+
+cc_test(
+    name = "tiff_file_test",
+    size = "small",
+    srcs = ["utilities/tiff/tiff_file_test.cpp"],
+    deps = [
+        "//aifo/aifocore:status",
+        "//aifo/fastslide:tiff_utilities",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@libtiff",
+    ],
+)
+
+cc_test(
+    name = "slide_reader_test",
+    size = "small",
+    srcs = ["slide_reader_test.cpp"],
+    deps = [
+        "//aifo/fastslide:slide_reader",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

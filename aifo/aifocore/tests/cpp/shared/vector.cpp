@@ -501,6 +501,54 @@ TEST_F(SharedVectorTest, PointerInvalidationTest) {
   }
 }
 
+TEST_F(SharedVectorTest, SharedVectorLogicalSizeChanges) {
+  // Arrange
+  std::vector<float> data = {1.0, 2.0, 3.0, 4.0};
+  std::vector<size_t> shape = {2, 2};
+
+  // Act
+  auto size_pre_append = shared_vector->size();
+  shared_vector->append(data, shape);
+  auto size_after_append = shared_vector->size();
+
+  // Assert
+  EXPECT_EQ(size_pre_append, 0);
+  EXPECT_EQ(size_after_append, 1);
+}
+
+TEST_F(SharedVectorTest, SharedVectorLogicalSizeChangesForSecondPointer) {
+  // Arrange
+  std::vector<float> data = {1.0, 2.0, 3.0, 4.0};
+  std::vector<size_t> shape = {2, 2};
+  SharedVector shared_vector_second_instance(shared_memory_name, chunk_size,
+                                             max_memory_size);
+
+  // Act
+  auto size_pre_append = shared_vector_second_instance.size();
+  // Vector initialized at setup appends, updates logical size globally
+  shared_vector->append(data, shape);
+  auto size_after_append = shared_vector_second_instance.size();
+
+  // Assert
+  EXPECT_EQ(shared_vector->GetRefCount(), 2);
+  EXPECT_EQ(size_pre_append, 0);
+  EXPECT_EQ(size_after_append, 1);
+}
+
+TEST_F(SharedVectorTest, CorrectLogicalSizeOnInstantiation) {
+  // Arrange
+  std::vector<float> data = {1.0, 2.0, 3.0, 4.0};
+  std::vector<size_t> shape = {2, 2};
+
+  // Act
+  shared_vector->append(data, shape);
+  SharedVector shared_vector_second_instance(shared_memory_name, chunk_size,
+                                             max_memory_size);
+
+  // Assert
+  EXPECT_EQ(shared_vector_second_instance.size(), 1);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

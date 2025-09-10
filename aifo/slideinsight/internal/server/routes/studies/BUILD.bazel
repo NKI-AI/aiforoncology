@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "studies",
+    srcs = [
+        "studies.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/routes/studies",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+    deps = [
+        "//aifo/slideinsight/internal/server/handlers",
+        "//aifo/slideinsight/internal/server/middleware",
+        "//aifo/slideinsight/internal/server/ports",
+        "//aifo/slideinsight/internal/server/services",
+        "@com_github_gofiber_fiber_v2//:fiber",
+    ],
+)

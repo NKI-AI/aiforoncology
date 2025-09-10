@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "errors",
+    srcs = [
+        "auth_errors.go",
+        "database_errors.go",
+        "errors.go",
+        "raster_annotation_errors.go",
+        "resource_errors.go",
+        "user_errors.go",
+    ],
+    importpath = "aifo.dev/aifo/slideinsight/internal/server/errors",
+    visibility = ["//aifo/slideinsight:__subpackages__"],
+)

@@ -874,6 +874,8 @@ SlideAnnotations.register_importer(".importers.halo_xml", "halo_xml")
 SlideAnnotations.register_importer(".importers.asap_xml", "asap_xml")
 SlideAnnotations.register_importer(".importers.dlup_xml", "dlup_xml")
 SlideAnnotations.register_importer(".importers.darwin_json", "darwin_json")
+SlideAnnotations.register_importer(".importers.slidescore_tsv", "slidescore_tsv")
 
 SlideAnnotations.register_exporter(".exporters.geojson", "geojson")
 SlideAnnotations.register_exporter(".exporters.dlup_xml", "dlup_xml")
+SlideAnnotations.register_exporter(".exporters.slidescore_tsv", "slidescore_tsv")

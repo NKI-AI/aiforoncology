@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from fomo.models.vit import DinoVisionTransformer3d
+from dinov2.models.vision_transformer import DinoVisionTransformer3d
 
 
 class TestDinoVisionTransformer3d:
@@ -15,28 +15,28 @@ class TestDinoVisionTransformer3d:
             embed_dim=128,
             depth=2,
             num_heads=2,
-            embed_layer="PatchEmbed3d",
         )
 
         # Create a class token with ones
         class_token = torch.ones(1, 1, model.embed_dim)
 
+        patch_depth, patch_height, patch_width = model.patch_size
+        num_patches_d, num_patches_h, num_patches_w = model.patch_embed.patches_resolution
+
         # Create patch embeddings with values that reflect their 3D position
         # Initialize with zeros
-        patch_embed = torch.zeros(
-            1, model._num_patches_d * model._num_patches_h * model._num_patches_w, model.embed_dim
-        )
+        patch_embed = torch.zeros(1, num_patches_d * num_patches_h * num_patches_w, model.embed_dim)
 
         # Fill in the first few dimensions of each embedding with the normalized d,h,w coordinates
         # This creates a predictable 3D gradient pattern in the embeddings
-        for d in range(model._num_patches_d):
-            for h in range(model._num_patches_h):
-                for w in range(model._num_patches_w):
-                    idx = d * model._num_patches_d**2 + h * model._num_patches_h + w
+        for d in range(num_patches_d):
+            for h in range(num_patches_h):
+                for w in range(num_patches_w):
+                    idx = d * num_patches_d**2 + h * num_patches_h + w
                     # Use first 3 dimensions to store d,h,w position (0 to 1)
-                    patch_embed[0, idx, 0] = d / (model._num_patches_d - 1)  # d position (normalized)
-                    patch_embed[0, idx, 1] = h / (model._num_patches_h - 1)  # h position (normalized)
-                    patch_embed[0, idx, 2] = w / (model._num_patches_w - 1)  # w position (normalized)
+                    patch_embed[0, idx, 0] = d / (num_patches_d - 1)  # d position (normalized)
+                    patch_embed[0, idx, 1] = h / (num_patches_h - 1)  # h position (normalized)
+                    patch_embed[0, idx, 2] = w / (num_patches_w - 1)  # w position (normalized)
 
         model.pos_embed = torch.nn.Parameter(torch.cat([class_token, patch_embed], dim=1))
 
@@ -44,16 +44,18 @@ class TestDinoVisionTransformer3d:
 
     def test_no_interpolation_needed(self, model: DinoVisionTransformer3d) -> None:
         """Test when interpolation is not needed (first if-statement is true)"""
+
+        patch_depth, patch_height, patch_width = model.patch_size
+        num_patches_d, num_patches_h, num_patches_w = model.patch_embed.patches_resolution
+
         # Arrange
-        img_depth = model._patch_depth * model._num_patches_d
-        img_height = model._patch_height * model._num_patches_h
-        img_width = model._patch_width * model._num_patches_w
-        embeddings = torch.randn(
-            1, 1 + model._num_patches_d * model._num_patches_h * model._num_patches_w, model.embed_dim
-        )
+        img_depth = patch_depth * num_patches_d
+        img_height = patch_height * num_patches_h
+        img_width = patch_width * num_patches_w
+        embeddings = torch.randn(1, 1 + num_patches_d * num_patches_h * num_patches_w, model.embed_dim)
 
         # Act
-        result = model._interpolate_pos_encoding(embeddings, img_width, img_height, img_depth)
+        result = model._interpolate_pos_encoding(embeddings, (img_width, img_height, img_depth))
 
         # Assert
         assert torch.equal(result, model.pos_embed)
@@ -70,10 +72,14 @@ class TestDinoVisionTransformer3d:
     )
     def test_interpolation(self, model: DinoVisionTransformer3d, scale_factor: float) -> None:
         """Test both up- and downsampling of position embeddings with verification of interpolated values"""
+
+        patch_depth, patch_height, patch_width = model.patch_size
+        num_patches_d, num_patches_h, num_patches_w = model.patch_embed.patches_resolution
+
         # Arrange
-        original_depth = model._patch_depth * model._num_patches_d
-        original_height = model._patch_height * model._num_patches_h
-        original_width = model._patch_width * model._num_patches_w
+        original_depth = patch_depth * num_patches_d
+        original_height = patch_height * num_patches_h
+        original_width = patch_width * num_patches_w
 
         # Calculate new dimensions
         img_depth = int(original_depth * scale_factor)
@@ -82,15 +88,15 @@ class TestDinoVisionTransformer3d:
 
         # Create embeddings that would match the scaled dimensions
         new_num_patches_d, new_num_patches_h, new_num_patches_w = (
-            (img_depth // model._patch_depth),
-            (img_height // model._patch_height),
-            (img_width // model._patch_width),
+            (img_depth // patch_depth),
+            (img_height // patch_height),
+            (img_width // patch_width),
         )
         new_patch_count = new_num_patches_d * new_num_patches_h * new_num_patches_w
         embeddings = torch.randn(1, 1 + new_patch_count, model.embed_dim)
 
         # Act
-        result = model._interpolate_pos_encoding(embeddings, img_width, img_height, img_depth)
+        result = model._interpolate_pos_encoding(embeddings, (img_width, img_height, img_depth))
 
         # Assert
         # 1. Verify shape
@@ -146,13 +152,15 @@ class TestDinoVisionTransformer3d:
     def test_forward_features_returns_expected_shape(
         self, model: DinoVisionTransformer3d, img_size: tuple[int, int, int]
     ) -> None:
+        patch_depth, patch_height, patch_width = model.patch_size
+        num_patches_d, num_patches_h, num_patches_w = model.patch_embed.patches_resolution
         # arrange
         img = torch.randn(img_size)
         img_d, img_h, img_w = img_size[-3:]
         num_patches_d, num_patches_h, num_patches_w = (
-            (img_d // model._patch_depth),
-            (img_h // model._patch_height),
-            (img_w // model._patch_width),
+            (img_d // patch_depth),
+            (img_h // patch_height),
+            (img_w // patch_width),
         )
         # Add one for the CLS-token
         total_patches = num_patches_d * num_patches_h * num_patches_w

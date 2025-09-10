@@ -11,8 +11,10 @@ import (
 	"github.com/suyashkumar/dicom/pkg/frame"
 )
 
-const dicomMagicWord = "DICM"
-const dicomHeaderSize = 132
+const (
+	dicomMagicWord  = "DICM"
+	dicomHeaderSize = 132
+)
 
 func ReadDICOMMetadata(filePath string) (*dicom.Dataset, error) {
 	// Open the file

@@ -21,7 +21,7 @@ from fvcore.common.checkpoint import PeriodicCheckpointer
 from fomo.ct.augmentations import DataAugmentationCTBatch3d
 from fomo.dataset.vector_dataset.vector_dataset import SharedVectorDataset
 from fomo.dataset.prefetch import PinnedDataPrefetcher
-from fomo.models.builder import build_model_from_cfg
+from dinov2.models import build_model_from_cfg
 from fomo.transforms import collate_data_and_cast_3d, pad_tensor_to_gpu
 from fomo.utils.masking import MaskingGenerator3d
 from fomo.utils.training import (

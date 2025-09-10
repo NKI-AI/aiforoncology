@@ -1,0 +1,172 @@
+trainer:
+  class_path: eva.Trainer
+  init_args:
+    accelerator: gpu
+    devices: 1 # multi-gpu training is not officially supported, so will set to 1 for now
+    n_runs: &N_RUNS ${oc.env:N_RUNS, 1}
+    default_root_dir: &OUTPUT_ROOT ${oc.env:OUTPUT_ROOT, /projects/mri_fomo/eva/logs/${oc.env:MODEL_NAME, vit_large_patch14_dinov2}/classification/${oc.env:DATASET_NAME, duke}/${oc.env:LABEL_NAME, bmi_group_simplified}/mil/single}
+    max_epochs: &MAX_EPOCHS ${oc.env:MAX_EPOCHS, 1}
+    callbacks:
+      - class_path: eva.callbacks.ConfigurationLogger
+      - class_path: lightning.pytorch.callbacks.TQDMProgressBar
+        init_args:
+          refresh_rate: ${oc.env:TQDM_REFRESH_RATE, 10}
+      - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+        init_args:
+          logging_interval: epoch
+      - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+        init_args:
+          filename: best
+          save_last: true
+          save_top_k: 1
+          monitor: &MONITOR_METRIC ${oc.env:MONITOR_METRIC, val/AverageLoss}
+          mode: &MONITOR_METRIC_MODE ${oc.env:MONITOR_METRIC_MODE, min}
+      - class_path: lightning.pytorch.callbacks.EarlyStopping
+        init_args:
+          min_delta: 0
+          patience: 100
+          monitor: *MONITOR_METRIC
+          mode: *MONITOR_METRIC_MODE
+      - class_path: eva.callbacks.ClassificationEmbeddingsWriter
+        init_args:
+          output_dir: &DATASET_EMBEDDINGS_ROOT ${oc.env:EMBEDDINGS_ROOT, /projects/mri_fomo/eva/embeddings}/${oc.env:MODEL_NAME, vit_large_patch14_dinov2_v3}/classification/${oc.env:DATASET_NAME, duke}/${oc.env:LABEL_NAME, bmi_group_simplified}/mil/single
+          dataloader_idx_map:
+            0: train
+            1: val
+            2: test
+          metadata_keys: ["multi_id", "slice_index", "patient_id"]
+          overwrite: True
+          backbone:
+            class_path: eva.vision.models.wrappers.TimmModel
+            init_args:
+              model_name: ${oc.env:MODEL_NAME, vit_large_patch14_dinov2}
+              pretrained: True
+              # out_indices: ${oc.env:OUT_INDICES, 1}
+              model_kwargs:
+                in_chans: 1
+                dynamic_img_size: true
+                global_pool: 'token'
+                class_token: true
+                no_embed_class: false
+    logger:
+      - class_path: lightning.pytorch.loggers.TensorBoardLogger
+        init_args:
+          save_dir: *OUTPUT_ROOT
+          name: ""
+model:
+  class_path: eva.HeadModule
+  init_args:
+    head:
+      class_path: eva.vision.models.networks.ABMIL
+      init_args:
+        input_size: ${oc.env:IN_FEATURES, 1024}
+        output_size: &NUM_CLASSES ${oc.env:NUM_CLASSES, 4}
+        projected_input_size: 128
+        hidden_size_attention: 64
+        hidden_sizes_mlp: [64, 32]
+        dropout_input_embeddings: 0.2
+        dropout_attention: 0.3
+        dropout_mlp: 0.3
+    criterion: torch.nn.CrossEntropyLoss
+    optimizer:
+      class_path: torch.optim.AdamW
+    lr_scheduler:
+      class_path: torch.optim.lr_scheduler.CyclicLR # Changed from PolynomialLR
+      init_args:
+        base_lr: 0.00001
+        max_lr: 0.0001
+        step_size_up: 35000
+        cycle_momentum: false
+        mode: 'triangular2'
+    metrics:
+      common:
+        - class_path: eva.metrics.AverageLoss
+        - class_path: eva.metrics.MulticlassClassificationMetrics
+          init_args:
+            num_classes: *NUM_CLASSES
+            average: "macro"
+            # evaluation:
+            #   - class_path: torchmetrics.ClasswiseWrapper
+            #     init_args:
+            #       metric:
+            #         class_path: torchmetrics.classification.MulticlassAccuracy
+            #         init_args:
+            #           num_classes: *NUM_CLASSES
+            #           average: "none"
+data:
+  class_path: eva.DataModule
+  init_args:
+    datasets:
+      train:
+        class_path: eva.datasets.MultiEmbeddingsClassificationDataset
+        init_args: &DATASET_ARGS
+          root: *DATASET_EMBEDDINGS_ROOT
+          manifest_file: manifest.csv
+          column_mapping: {"path": "embeddings", "target": "target", "split": "split", "multi_id": "multi_id", "study_instance_uid": "study_instance_uid", "slice_index": "slice_index"}
+          split: train
+          # embeddings_transforms:
+          #   class_path: eva.core.data.transforms.Pad2DTensor
+          #   init_args:
+          #     pad_size: &N_PATCHES ${oc.env:N_PATCHES, 1200}
+          target_transforms:
+            class_path: fef.mri.transforms.dtype.ArrayToLongTensor
+      val:
+        class_path: eva.datasets.MultiEmbeddingsClassificationDataset
+        init_args:
+          !!merge <<: *DATASET_ARGS
+          split: val
+      test:
+        class_path: eva.datasets.MultiEmbeddingsClassificationDataset
+        init_args:
+          !!merge <<: *DATASET_ARGS
+          split: test
+      predict:
+        - class_path: fef.datasets.classification.mri.mri_cls_datasets_singlescan.MRIMILClassificationDataset
+          init_args: &PREDICT_DATASET_ARGS
+            label_file: ${oc.env:LABEL_FILE, /data/groups/public/archive/MAMA-MIA/manifests/manifest_duke.csv}
+            label_name: ${oc.env:LABEL_NAME, bmi_group_simplified}
+            split: train
+            crop_percentile: ${oc.env:CROP_PERCENTILE, 85.0}
+            visualize_preprocessing: ${oc.env:VISUALIZE, False}
+            tumor_ratio: ${oc.env:TUMOR_RATIO, null}
+            image_transforms:
+              class_path: torchvision.transforms.v2.Compose
+              init_args:
+                transforms:
+                  - class_path: fef.transforms.transforms.PercentileClipper
+                    init_args:
+                      percentile: 99.9
+                  - class_path: fef.transforms.transforms.MinMaxNormalizer
+                  - class_path: torchvision.transforms.v2.Normalize
+                    init_args:
+                      mean: [0.1008]
+                      std: [0.193391]
+                  - class_path: fef.mri.transforms.cropping.PatchDivisiblePadder
+                    init_args:
+                      patch_size: ${oc.env:PATCH_SIZE, 14}
+        - class_path: fef.datasets.classification.mri.mri_cls_datasets_singlescan.MRIMILClassificationDataset
+          init_args:
+            !!merge <<: *PREDICT_DATASET_ARGS
+            split: val
+        - class_path: fef.datasets.classification.mri.mri_cls_datasets_singlescan.MRIMILClassificationDataset
+          init_args:
+            !!merge <<: *PREDICT_DATASET_ARGS
+            split: test
+    dataloaders:
+      train:
+        batch_size: &BATCH_SIZE ${oc.env:BATCH_SIZE, 1}
+        pin_memory: true
+        shuffle: true
+        num_workers: 1
+      val:
+        batch_size: *BATCH_SIZE
+        pin_memory: true
+        num_workers: 1
+      test:
+        batch_size: *BATCH_SIZE
+        pin_memory: true
+        num_workers: 1
+      predict:
+        batch_size: &PREDICT_BATCH_SIZE ${oc.env:PREDICT_BATCH_SIZE, 1}
+        pin_memory: true
+        num_workers: 1

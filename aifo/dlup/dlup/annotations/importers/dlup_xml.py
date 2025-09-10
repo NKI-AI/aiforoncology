@@ -20,7 +20,7 @@ from typing import Type, TypeVar
 
 import dlup
 from dlup._types import PathLike
-from dlup.annotations.tags import SlideTag
+from dlup.annotations.tags import SlideTag, TagAttribute
 from dlup.geometry import Box, Point, Polygon
 from dlup.utils.annotations_utils import hex_to_rgb
 from dlup.utils.geometry_xml import parse_dlup_xml_polygon, parse_dlup_xml_roi_box
@@ -57,7 +57,14 @@ def dlup_xml_importer(cls: Type[_TSlideAnnotations], dlup_xml: PathLike) -> _TSl
         for tag in dlup_annotations.tags.tag:
             if not tag.label:
                 raise ValueError("Tag does not have a label.")
-            curr_tag = SlideTag(attributes=[], label=tag.label, color=hex_to_rgb(tag.color) if tag.color else None)
+            attributes = []
+            if hasattr(tag, "attribute") and tag.attribute:
+                for attr in tag.attribute:
+                    attr_color = hex_to_rgb(attr.color) if getattr(attr, "color", None) else None
+                    attributes.append(TagAttribute(label=attr.value, color=attr_color))
+            curr_tag = SlideTag(
+                attributes=attributes, label=tag.label, color=hex_to_rgb(tag.color) if tag.color else None
+            )
             tags.append(curr_tag)
 
     instance = cls(tags=tuple(tags), metadata=metadata)

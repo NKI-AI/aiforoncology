@@ -1,0 +1,80 @@
+/* 
+  OverviewMap styles for SlideInsight
+*/
+
+.ol-overviewmap-topright.ol-control {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  left: auto !important;
+  width: 180px !important;
+  height: 135px !important;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  z-index: 1200 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ol-overviewmap-topright .ol-overviewmap-map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-overviewmap-topright .ol-overviewmap-box {
+  border: 2px solid rgba(0, 60, 136, 0.6);
+}
+
+/* Improved button styling - ensure it's always visible */
+.ol-overviewmap-topright button,
+.ol-overviewmap-topright.ol-control button {
+  position: absolute !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  right: auto !important;
+  top: auto !important;
+  background-color: white !important;
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important;
+  color: #333 !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 16px !important;
+  line-height: 20px !important;
+  text-align: center !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1201 !important;
+}
+
+.ol-overviewmap-topright button:hover,
+.ol-overviewmap-topright.ol-control button:hover {
+  background-color: #f0f0f0 !important;
+}
+
+/* Style for collapsed state */
+.ol-overviewmap-topright.ol-collapsed {
+  width: 32px !important;
+  height: 32px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Ensure button is visible in collapsed state */
+.ol-overviewmap-topright.ol-collapsed button {
+  position: absolute !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  right: auto !important;
+  top: auto !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

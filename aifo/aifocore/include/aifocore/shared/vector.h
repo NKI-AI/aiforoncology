@@ -79,6 +79,8 @@ struct SharedResources {
       chunk_alloc_inst;
   ShmemMutex& mutex;
   boost::atomic<std::size_t>* ref_count;
+  // lock-free public size accessor
+  boost::atomic<std::size_t>* logical_size;
 
   SharedResources(const std::string& name, std::size_t max_memory_size)
       : segment(bi::open_or_create, name.c_str(), max_memory_size),
@@ -88,6 +90,8 @@ struct SharedResources {
         mutex(*segment.find_or_construct<ShmemMutex>("mutex")()) {
     ref_count =
         segment.find_or_construct<boost::atomic<std::size_t>>("ref_count")(0);
+    logical_size = segment.find_or_construct<boost::atomic<std::size_t>>(
+        "logical_size")(0);
     bool is_first_instance = ref_count->load(boost::memory_order_acquire) == 0;
     ref_count->fetch_add(1, boost::memory_order_acq_rel);
 
@@ -129,7 +133,8 @@ class SharedVector {
     std::size_t max_chunks = max_memory_size / chunk_size_;
     data_chunks_->reserve(max_chunks);
 
-    logical_size_.store(data_chunks_->size(), boost::memory_order_relaxed);
+    shared_resources_->logical_size->store(data_chunks_->size(),
+                                           boost::memory_order_relaxed);
 
     // You could log here for instance the shared memory base address using
     // shared_resources_->segment.get_address();
@@ -146,7 +151,8 @@ class SharedVector {
   SharedChunksVector* GetDataChunks() const { return data_chunks_; }
 
   std::shared_ptr<SharedChunk> GetChunk(std::size_t index) {
-    if (index >= logical_size_.load(boost::memory_order_acquire)) {
+    if (index >=
+        shared_resources_->logical_size->load(boost::memory_order_acquire)) {
       throw std::out_of_range("Index out of range");
     }
 
@@ -194,7 +200,8 @@ class SharedVector {
       throw std::runtime_error("Data chunks vector is full");
     }
     data_chunks_->emplace_back(new_chunk);
-    logical_size_.store(data_chunks_->size(), boost::memory_order_release);
+    shared_resources_->logical_size->store(data_chunks_->size(),
+                                           boost::memory_order_release);
   }
 
   template <typename T>
@@ -205,7 +212,8 @@ class SharedVector {
       throw exceptions::MemoryError("Array size exceeds chunk size");
     }
 
-    if (index >= logical_size_.load(boost::memory_order_acquire)) {
+    if (index >=
+        shared_resources_->logical_size->load(boost::memory_order_acquire)) {
       throw std::out_of_range("Index out of range");
     }
 
@@ -223,11 +231,12 @@ class SharedVector {
   }
 
   std::size_t size() const noexcept {
-    return logical_size_.load(boost::memory_order_acquire);
+    return shared_resources_->logical_size->load(boost::memory_order_acquire);
   }
 
   std::size_t GetChunkRefCount(std::size_t index) {
-    if (index >= logical_size_.load(boost::memory_order_acquire)) {
+    if (index >=
+        shared_resources_->logical_size->load(boost::memory_order_acquire)) {
       throw std::out_of_range("Index out of range");
     }
     const SharedChunkPtr& chunk_ptr = (*data_chunks_)[index];
@@ -239,7 +248,8 @@ class SharedVector {
   }
 
   std::size_t GetChunkPointer(std::size_t index) {
-    if (index >= logical_size_.load(boost::memory_order_acquire)) {
+    if (index >=
+        shared_resources_->logical_size->load(boost::memory_order_acquire)) {
       throw std::out_of_range("Index out of range");
     }
     const SharedChunkPtr& chunk_ptr = (*data_chunks_)[index];
@@ -250,7 +260,8 @@ class SharedVector {
   }
 
   std::vector<std::size_t> GetChunkShape(std::size_t index) const {
-    if (index >= logical_size_.load(boost::memory_order_acquire)) {
+    if (index >=
+        shared_resources_->logical_size->load(boost::memory_order_acquire)) {
       throw std::out_of_range("Index out of range");
     }
     const SharedChunkPtr& chunk_ptr = (*data_chunks_)[index];
@@ -274,9 +285,6 @@ class SharedVector {
   std::size_t chunk_size_;
   std::unique_ptr<SharedResources> shared_resources_;
   SharedChunksVector* data_chunks_;
-
-  // lock-free public size accessor
-  boost::atomic<std::size_t> logical_size_{0};
 };
 
 }  // namespace aifocore::shared

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import importlib
 import functools
 from typing import Any, Callable, Literal, Sequence
@@ -27,6 +28,53 @@ from monai.utils import (
     Method,
     PytorchPadMode,
 )
+
+
+class PercentileClipper(v2.Transform):
+    """Transform to clip tensor values based on a percentile threshold.
+
+    Only clips the upper bound, keeping values below the specified percentile.
+
+    Parameters
+    ----------
+    percentile : float
+        The percentile threshold (0-100) above which values will be clipped.
+    """
+
+    def __init__(self, percentile: float) -> None:
+        """Inits :class:`PercentileClipper`.
+
+        Parameters
+        ----------
+
+        percentile : float
+            The percentile threshold (0-100) above which values will be clipped.
+        """
+        super().__init__()
+        self.percentile = percentile / 100.0
+
+    @override
+    def transform(self, inpt: torch.Tensor, _: dict[str, Any]) -> torch.Tensor:
+        """Transform a tensor by clipping values above the specified percentile.
+
+        Parameters
+        ----------
+        inpt : torch.Tensor
+            Input tensor
+        _ : dict[str, Any]
+            Unused params dictionary
+
+        Returns
+        -------
+        torch.Tensor
+            Tensor with values above the percentile threshold clipped
+        """
+        batch_size = inpt.size(0)
+        inpt_flat = inpt.view(batch_size, -1)
+        upper_bound = torch.quantile(inpt_flat, self.percentile, dim=1, keepdim=True)
+        upper_bound = upper_bound.view(batch_size, *([1] * (inpt.dim() - 1)))
+        inpt = torch.min(inpt, upper_bound)
+        return inpt
 
 
 class ChannelUnsqueeze(v2.Transform):

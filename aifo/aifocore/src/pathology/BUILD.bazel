@@ -1,0 +1,27 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "inference_engine_module",
+    srcs = [
+        "inference_engine_module.cpp",
+    ],
+    deps = [
+        "//aifo/ahcore:inference_engine",
+        "@abseil-cpp//absl/status:status",
+        "@pybind11",
+    ],
+)
+
+cc_binary(
+    name = "inference",
+    srcs = [
+        "inference.cpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aifo/ahcore:inference_engine",
+        "//third_party/CLI11",
+        "@abseil-cpp//absl/status:status",
+        "@spdlog",
+    ],
+)

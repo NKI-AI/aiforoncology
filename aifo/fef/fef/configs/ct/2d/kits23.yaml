@@ -5,7 +5,7 @@ trainer:
     default_root_dir: &OUTPUT_ROOT ${oc.env:OUTPUT_ROOT, ${oc.env:SCRATCH}/output}
     max_steps: &MAX_STEPS ${oc.env:MAX_STEPS, 5000}
     callbacks:
-      - class_path: eva.callbacks.ConfigurationLogger
+      - class_path: fef.callbacks.ConfigurationLogger
       - class_path: lightning.pytorch.callbacks.TQDMProgressBar
         init_args:
           refresh_rate: ${oc.env:TQDM_REFRESH_RATE, 1}
@@ -51,10 +51,11 @@ trainer:
                   sw_batch_size: 100
                   spatial_dim: 0
     logger:
-      - class_path: lightning.pytorch.loggers.TensorBoardLogger
+      - class_path: lightning.pytorch.loggers.MLFlowLogger
         init_args:
-          save_dir: *OUTPUT_ROOT
-          name: ""
+          save_dir: ${oc.env:MLFLOW_SAVE_DIR, ${oc.env:SCRATCH}/mlruns}
+          experiment_name: ${oc.env:MLFLOW_EXPERIMENT_NAME, kits23}
+          run_name: ${oc.env:RUN_NAME, default_run}
 model:
   class_path: fef.models.SemanticSegmentation3dModule
   init_args:

@@ -1,5 +1,5 @@
 write_file_callback:
-  _target_: ahcore.callbacks.WriteFileCallback
+  _target_: ahcore.callbacks.write_file_callback.WriteFileCallback
   dump_dir: ${oc.env:SCRATCH}/${task_name}/${now:%Y-%m-%d}_${now:%H-%M-%S}
   queue_size: 32
   writer_class:
